@@ -1,0 +1,106 @@
+\documentclass[10pt, a4paper]{article}
+
+% =========================================
+\usepackage[top=3cm, bottom=4cm, left=3.5cm, right=3.5cm]{geometry}
+% \usepackage{fontspec}
+\usepackage[spanish, bidi=basic, provide=*]{babel}
+\babelprovide[import, onchar=ids fonts]{spanish}
+\babelprovide[import, onchar=ids fonts]{english}
+% \babelfont{rm}{Noto Sans}
+% =====================================================================
+
+\usepackage[spanish]{babel} % <-- DESCOMENTA ESTA LÍNEA EN OVERLEAF SI BORRAS EL BLOQUE DE ARRIBA
+
+\usepackage{graphicx} % Required for inserting images
+\usepackage{tcolorbox}
+\usepackage{amsmath,amsthm,amsfonts,amssymb,amscd, fancyhdr, color, comment, environ,mathrsfs}
+\usepackage{pdfpages}
+\usepackage{booktabs} 
+\usepackage{pgfplots} 
+\pgfplotsset{compat=1.18}
+\usepackage{enumitem}
+\setlist[itemize]{label=-}
+
+\headheight 35pt
+\lhead{\today}
+\rhead{\includegraphics[width=2.5cm]{Materiales/UNAL_Logo_Negro.png}} 
+\headsep 1.2em
+\pagestyle{fancy}
+
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+
+% EDITAR SIEMPRE
+\newcommand\tema{} % <-- Tema de la Tarea
+\newcommand\autores{
+Oscar Ivan Ulises Gutiérrez Palacios \\
+} % <-- Autores
+\newcommand\profesor{Jorge Eduardo Ortiz Triviño} % <-- Profesor
+\newcommand\materia{Modelos estocásticos y simulación en computación y comunicaciones} % <-- MAteria
+\newcommand\grupo{2026-2S} % <-- Nùmero de grupo
+
+\begin{document}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{3cm}
+        \Huge
+        \textbf{Plantillas tareas} \textbf{\tema}
+        
+        \Huge
+        \materia    
+        \vspace{1.5cm}
+        
+        \vspace{1cm}
+        \Large
+        \text{Autores:} \\ \autores
+        
+        \vspace{7cm}
+        
+        \Large
+        \text{\grupo}
+         
+        \text{Profesor: \profesor}                      % <-- Profesor
+        
+        \vfill
+            
+        \vspace{0.4cm}
+            
+        \includegraphics[width=0.35\textwidth]{Materiales/UNAL_Logo_Negro.png} 
+     
+        
+        \text{\today}
+    \end{center}
+\end{titlepage}
+
+\newpage
+\tableofcontents
+\newpage
+
+Es una tarea (implementación) pequeña, en consecuencia, así mismo deben ser sus entregables: pequeños pero completos. La solución de una tarea obligatoria automatizada también debe subirse al buzón del estudiante, pero, en este caso, los entregables mínimos son los siguientes:
+
+\section{Marco teórico}
+Sección con el marco teórico.
+
+\section{Descripción y justificación del problema a resolver}
+SecciónF con descripción y justificación del problema a resolver.
+
+\section{Diseño de la aplicación o solución}
+Usualmente diseños básicos emplean lenguajes simples tales como diagramas de flujo, diagramas de bloques, pseudocódigo mientras que diseños complejos suelen emplear lenguajes de diseño más sofisticados tales como UML.
+
+\section{Código fuente}
+Código fuente completo de la herramienta construida (incluidas las versiones utilizadas de librerías que no se encuentran en la instalación estándar del software).
+
+\section{Manual de usuario y manual técnico}
+Un archivo PDF con el manual de usuario y manual técnico.
+
+\section{Experimentación y análisis de resultados}
+Documentación de la experimentación y análisis de resultados para al menos 3 escenarios de prueba.
+
+\section{Observaciones}
+El manual de usuario y manual tecnico podríamos dejarlo en un PDF aparte, lo mismo con la sección de codigo fuente. 
+
+\end{document}

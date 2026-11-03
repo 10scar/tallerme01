@@ -1,0 +1,28 @@
+Trabajo previo:
+
+a.      Entrar en detalles más técnicos y precisos sobre redes ad hoc. Para ello pueden emplear el material incluido en nuestra biblioteca digital en la carpeta MANETS. El enlace para acceder directamente es:  https://drive.google.com/drive/folders/1midsyo6oDcCKp5cPIzayFMzYHD_JTeK8?usp=drive_link.
+
+b.      Instalar NS-3.  Pueden bajar el software completo de la página https://www.nsnam.org/. La versión más reciente es la 3.46; sin embargo, los videos de instalación con los que disponemos en nuestra biblioteca digital corresponden a la versión 3.43 (el enlace a la carpeta completa de NS-3 en nuestra biblioteca  es (recomendado instalarlo con el componente de AI): https://drive.google.com/drive/folders/1k9QdPRldDsVUrhxIXji4YQmkvqN3XWtL?usp=drive_link).
+
+d.      A partir de ejemplos que vienen incluidos en la instalación en la carpeta de ejemplos, comprender cómo se simulan redes inalámbricas y en particular MANETs.  En el video  https://drive.google.com/file/d/1OPKg07rYGy5pDwT5jasOjTGs4wqp40Lj/view?usp=drive_link se aclaran unas dudas de instalación del software y principalmente se hacen los comentarios de tres ejemplos en el campo de las MANETs.
+
+e.       Para la creación de los clústeres pueden tomar como referencias el ejemplo: Mixed wired Wireless que pueden encontrar a través del enlace: https://www.nsnam.org/docs/release/3.27/doxygen/mixed-wired-wireless_8cc_source.html donde se crean redes LAN para segmentar los clúster y enlazarlos.
+
+f.       Otro ejemplo es wifi aggregation donde se pueden tomar diferentes AP (Clúster) para generar datos: https://www.nsnam.org/docs/release/3.27/doxygen/wifi-aggregation_8cc_source.html.
+
+g.      El libro Wireless Network Simulation: A Guide using Ad Hoc Networks and the ns-3 Simulator. Que pueden localizar a través del enlace https://drive.google.com/file/d/1mboH0zSkfBY6YfiSrcpXeeLj86kmFxrA/view?usp=drive_link presenta cómo simular redes Ad Hoc empleando NS-3.
+
+3.      Enunciado del problema:
+
+a.      El grupo debe formular una indagación (pregunta de investigación) (recuerden a Newton, quien, de acuerdo con una de nuestras recientes lecturas del libro del profesor Frank, usaba este truco científico) sobre modelos de movilidad en MANET, que involucre un sistema MANET jerárquico con al menos tres clústeres en el primer nivel y dos en el segundo. El sistema modelado y simulado debe permitir movimiento tanto a nivel de Cluster como también a nivel de nodo. Dicha indagación debe tener un nivel de dificultad intermedio, es decir, ni muy trivial ni muy compleja. Emplee el método científico para responder la indagación seleccionada.
+
+b.      El grupo debe hacer el análisis, diseño e implementación de la solución empleado el lenguaje NS-3.  Es deseable, mas no necesario, emplear la librería ns3-ai (enlace de partida: https://github.com/hust-diangroup/ns3-ai), componente que reemplazó a AI Gym.
+
+c.      El grupo debe realizar la documentación de los resultados, análisis de resultados, conclusiones y recomendaciones.
+
+
+INDAGACIÓN ESCOGIDA: Velocidad del clúster vs. velocidad del nodo
+¿Qué afecta más la tasa de entrega de paquetes en una MANET jerárquica: aumentar la velocidad de movimiento de los clústeres o aumentar la velocidad de los nodos dentro de cada clúster?
+Variables independientes: velocidad del clúster (p. ej. 0, 2, 5, 10 m/s) y velocidad de los nodos (mismos valores).
+Variable dependiente: PDR (packet delivery ratio) y retardo.
+Hipótesis posible: la movilidad del clúster degrada más el rendimiento, porque rompe los enlaces entre clústeres (los del segundo nivel), mientras que la de los nodos solo afecta enlaces locales.
