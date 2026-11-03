@@ -25,7 +25,7 @@ jobs:
         uses: xu-cheng/latex-action@v3
         with:
           root_file: Entregable.tex
-          latex_engine: lualatex
+          latexmk_use_lualatex: true
           args: -interaction=nonstopmode -halt-on-error -file-line-error
 
       - name: Renombrar PDF
