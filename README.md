@@ -104,7 +104,17 @@ Archivo: `simulacion/manet-jerarquica.cc` (se copia a `scratch/` de ns-3).
 
 ### 2.6 Versiones
 
-- **ns-3: versión 3.43** (`ns-3 versión: 3.43`). Es la versión de los videos de instalación del profesor, así que si alguien tiene problemas puede seguir esa guía paso a paso. Se instala con el componente AI como recomienda el correo, aunque ns3-ai no se usa en el código. Todo el grupo usa esta misma versión.
+- **ns-3: versión 3.43** (`ns-3 versión: 3.43`). Es la versión de los videos de instalación del profesor, así que si alguien tiene problemas puede seguir esa guía. **No** se instala ns3-ai: el correo lo recomienda, pero es opcional y el código no lo usa. Todo el grupo usa esta misma versión.
+
+  Instalación probada (Windows + WSL). En PowerShell como administrador: `wsl --install -d Ubuntu-22.04`. Luego, en Ubuntu:
+  ```bash
+  sudo apt update && sudo apt install -y g++ python3 python3-pip cmake ninja-build git wget bzip2
+  cd ~ && wget https://www.nsnam.org/releases/ns-allinone-3.43.tar.bz2 && tar xjf ns-allinone-3.43.tar.bz2
+  cd ns-allinone-3.43/ns-3.43
+  ./ns3 configure --build-profile=optimized --enable-modules="wifi;aodv;mobility;internet;applications;flow-monitor;netanim"
+  ./ns3 build
+  ```
+  Trabajar siempre en `~` (disco de Linux), no en `/mnt/c/...`: compilar sobre el disco de Windows es mucho más lento.
 - **Sistema:** Ubuntu 22.04 (nativo o WSL2 en Windows).
 - **Compilador:** el que trae Ubuntu 22.04 (g++ 11), con CMake y el script `./ns3` de ns-3.
 - **Python:** 3.10+ con `pandas`, `matplotlib`, `scipy`.
