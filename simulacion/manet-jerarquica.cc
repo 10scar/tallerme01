@@ -13,7 +13,7 @@
  *                                                      clústeres, WiFi, AODV,
  *                                                      direccionamiento y
  *                                                      prueba de conectividad.
- *    Parte 2 — José Esteban Alvarado Monroy ......... ConfigurarMovilidad().
+ *    Parte 2 — Daniel Alonso Gracia Pinto ........... ConfigurarMovilidad().
  *    Parte 3 — Stephan Alain Roland García Martiquet  ConfigurarTrafico(),
  *                                                      ConfigurarMetricas(),
  *                                                      NetAnim.
@@ -62,7 +62,11 @@
 #include "ns3/network-module.h"
 #include "ns3/wifi-module.h"
 
+#include <cmath>
+#include <algorithm>
 #include <filesystem>
+#include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -107,6 +111,14 @@ struct Parametros
     double radioInicialNodos = 25.0;   // Radio del anillo inicial de miembros (m)
     double origenX = 275.0;            // Centro del primer clúster (m)
     double origenY = 300.0;
+
+    // --- Movilidad jerárquica (Parte 2, README sección 2.3) ---
+    double regionSuper = 100.0;    // Semiancho de la región de cada superclúster (m)
+    double regionCluster = 150.0;  // Semiancho de la región del clúster respecto a su superclúster (m)
+    double regionNodo = 40.0;      // Semiancho de la región del nodo respecto a su clúster (m)
+    double pausaCluster = 2.0;     // Pausa del RandomWaypoint de clúster y superclúster (s)
+    double pasoNodo = 10.0;        // Distancia recorrida por el nodo antes de cambiar de rumbo (m)
+    double trazaPosiciones = 0.0;  // Cada cuántos segundos imprimir posiciones (0 = no)
 };
 
 // =============================================================================
@@ -253,44 +265,243 @@ ConfigurarRed(const Parametros& p, RedJerarquica& red)
 // =============================================================================
 //  Parte 2 — Movilidad jerárquica   >>> RESPONSABLE: Parte 2 <<<
 //
-//  Lo que debe hacer (README, sección 2.3):
-//    Superclúster (X, Y)  → punto de referencia (fijo si superSpeed = 0)
-//      └─ Clúster (A..D)  → RandomWaypoint relativo a su superclúster,
-//                           región ±150 m, velocidad clusterSpeed, pausa 2 s
-//            └─ Nodo      → RandomWalk2d relativo a su clúster,
-//                           región ±40 m, velocidad nodeSpeed
-//    Usar HierarchicalMobilityModel anidado. clusterSpeed = 0 y nodeSpeed = 0
-//    deben dejar quieta la capa correspondiente.
+//  Tres capas anidadas con HierarchicalMobilityModel (README, sección 2.3).
+//  Cada capa se mueve RELATIVA a la de arriba: si el clúster se desplaza, sus
+//  5 nodos se desplazan con él, y además cada miembro se mueve dentro del
+//  clúster.
 //
-//  Mientras tanto (Parte 1) se usan posiciones FIJAS con la geometría inicial
-//  del diseño: el CH en el centro de su clúster y los miembros en un anillo de
-//  radio radioInicialNodos alrededor. Es exactamente el escenario E0.
+//    Superclúster (X, Y)  → RandomWaypoint alrededor de su posición inicial,
+//                           región ±regionSuper, velocidad superSpeed
+//                           (fijo si superSpeed = 0, como en los experimentos)
+//      └─ Clúster (A..D)  → RandomWaypoint relativo a su superclúster,
+//                           región ±regionCluster, velocidad clusterSpeed,
+//                           pausa pausaCluster
+//            ├─ CH        → fijo en el centro del clúster (README 2.7)
+//            └─ Miembro   → RandomWalk2d relativo a su clúster,
+//                           región ±regionNodo, velocidad nodeSpeed, cambia de
+//                           rumbo cada pasoNodo metros
+//
+//  - Velocidad 0 en una capa → esa capa usa ConstantPositionMobilityModel
+//    (queda quieta). Así E0, E1 y E2 aíslan cada tipo de movimiento.
+//  - Las velocidades son CONSTANTES (no un rango): en E1 y E2 los nodos o los
+//    clústeres se mueven exactamente a v, y los escenarios son comparables.
+//  - Con regionNodo = 40 m un miembro está como máximo a 40·√2 ≈ 56.6 m de su
+//    CH, dentro del alcance de 60 m: la movilidad de nodo nunca saca a un
+//    miembro del alcance directo de su CH (solo cambia la calidad de las rutas
+//    locales). La movilidad de clúster sí puede alejar CH más de 250 m.
+//  - RandomWalk2d cambia de rumbo por DISTANCIA (pasoNodo), no por tiempo:
+//    la forma de la trayectoria es la misma a cualquier velocidad, solo cambia
+//    lo rápido que se recorre. Eso hace comparable el barrido de velocidades.
+//  - Las posiciones iniciales son las del diseño (README 2.7) en todos los
+//    escenarios: superclústeres en (350, 300) y (650, 300), clústeres a
+//    ±separacionClusters/2 de su superclúster, CH en el centro y miembros en
+//    un anillo de radioInicialNodos.
 // =============================================================================
+
+// Une un modelo "hijo" (coordenadas relativas) a su "padre".
+static Ptr<HierarchicalMobilityModel>
+Anidar(Ptr<MobilityModel> padre, Ptr<MobilityModel> hijo)
+{
+    Ptr<HierarchicalMobilityModel> h = CreateObject<HierarchicalMobilityModel>();
+    h->SetParent(padre);
+    h->SetChild(hijo);
+    return h;
+}
+
+// Los modelos aleatorios de ns-3 NO se posicionan con SetPosition() antes de
+// la simulación (reprograman su primer movimiento). En su lugar, cada uno
+// arranca en su origen (0, 0) y se coloca sobre un "ancla" fija en la posición
+// inicial; su región se desplaza en -inicio para que quede centrada en el
+// centro de la capa padre. El resultado es una posición relativa a la capa
+// padre que empieza en `inicio` y se mueve en [-semiancho, semiancho]².
+static Ptr<MobilityModel>
+Anclar(Vector inicio, Ptr<MobilityModel> movimiento)
+{
+    Ptr<ConstantPositionMobilityModel> ancla = CreateObject<ConstantPositionMobilityModel>();
+    ancla->SetPosition(inicio);
+    if (!movimiento)
+    {
+        return ancla; // capa quieta
+    }
+    return Anidar(ancla, movimiento);
+}
+
+// RandomWaypoint de velocidad constante, con destinos uniformes en
+// [-semiancho, semiancho]² (coordenadas de la capa padre).
+static Ptr<MobilityModel>
+CrearWaypoint(double velocidad, double semiancho, double pausa, Vector inicio)
+{
+    if (velocidad <= 0.0)
+    {
+        return Anclar(inicio, nullptr);
+    }
+
+    auto uniforme = [semiancho](double desplazamiento) {
+        std::ostringstream s;
+        s << "ns3::UniformRandomVariable[Min=" << -semiancho - desplazamiento
+          << "|Max=" << semiancho - desplazamiento << "]";
+        return s.str();
+    };
+    Ptr<RandomRectanglePositionAllocator> destinos =
+        CreateObject<RandomRectanglePositionAllocator>();
+    destinos->SetAttribute("X", StringValue(uniforme(inicio.x)));
+    destinos->SetAttribute("Y", StringValue(uniforme(inicio.y)));
+
+    std::ostringstream vel;
+    vel << "ns3::ConstantRandomVariable[Constant=" << velocidad << "]";
+    std::ostringstream pau;
+    pau << "ns3::ConstantRandomVariable[Constant=" << pausa << "]";
+
+    Ptr<RandomWaypointMobilityModel> rwp = CreateObject<RandomWaypointMobilityModel>();
+    rwp->SetAttribute("Speed", StringValue(vel.str()));
+    rwp->SetAttribute("Pause", StringValue(pau.str()));
+    rwp->SetAttribute("PositionAllocator", PointerValue(destinos));
+    return Anclar(inicio, rwp);
+}
+
+// RandomWalk2d de velocidad constante, acotado a [-semiancho, semiancho]²
+// (coordenadas del clúster). Cambia de rumbo cada `paso` metros.
+static Ptr<MobilityModel>
+CrearCaminata(double velocidad, double semiancho, double paso, Vector inicio)
+{
+    if (velocidad <= 0.0)
+    {
+        return Anclar(inicio, nullptr);
+    }
+
+    std::ostringstream vel;
+    vel << "ns3::ConstantRandomVariable[Constant=" << velocidad << "]";
+
+    Ptr<RandomWalk2dMobilityModel> rw = CreateObject<RandomWalk2dMobilityModel>();
+    rw->SetAttribute("Bounds",
+                     RectangleValue(Rectangle(-semiancho - inicio.x,
+                                              semiancho - inicio.x,
+                                              -semiancho - inicio.y,
+                                              semiancho - inicio.y)));
+    rw->SetAttribute("Mode", StringValue("Distance"));
+    rw->SetAttribute("Distance", DoubleValue(paso));
+    rw->SetAttribute("Speed", StringValue(vel.str()));
+    return Anclar(inicio, rw);
+}
+
 static void
 ConfigurarMovilidad(const Parametros& p, RedJerarquica& red)
 {
-    Ptr<ListPositionAllocator> pos = CreateObject<ListPositionAllocator>();
+    uint32_t numSuper = red.superclusters.size();
     uint32_t miembrosPorCluster = p.nodosPorCluster - 1;
 
+    // Capa 1 — superclústeres, en coordenadas absolutas. El centro de cada
+    // superclúster es el punto medio de sus clústeres en la geometría inicial.
+    std::vector<Ptr<MobilityModel>> movSuper(numSuper);
+    std::vector<Vector> centroSuper(numSuper);
+    for (uint32_t s = 0; s < numSuper; ++s)
+    {
+        double primero = p.origenX + s * p.clustersPorSuper * p.separacionClusters;
+        double cx = primero + (p.clustersPorSuper - 1) * p.separacionClusters / 2.0;
+        centroSuper[s] = Vector(cx, p.origenY, 0.0);
+
+        // Región ±regionSuper alrededor de su centro inicial.
+        Ptr<ConstantPositionMobilityModel> centro = CreateObject<ConstantPositionMobilityModel>();
+        centro->SetPosition(centroSuper[s]);
+        movSuper[s] = Anidar(
+            centro,
+            CrearWaypoint(p.superSpeed, p.regionSuper, p.pausaCluster, Vector(0, 0, 0)));
+    }
+
+    // Capa 2 — clústeres, relativos a su superclúster.
     for (uint32_t k = 0; k < p.numClusters; ++k)
     {
-        double cx = p.origenX + k * p.separacionClusters;
-        double cy = p.origenY;
+        uint32_t s = red.SuperDe(k, p.clustersPorSuper);
+        double cxAbs = p.origenX + k * p.separacionClusters;
+        Vector inicioRel(cxAbs - centroSuper[s].x, p.origenY - centroSuper[s].y, 0.0);
 
-        pos->Add(Vector(cx, cy, 0.0)); // CH en el centro
-        for (uint32_t m = 0; m < miembrosPorCluster; ++m)
+        Ptr<MobilityModel> movCluster = Anidar(
+            movSuper[s],
+            CrearWaypoint(p.clusterSpeed, p.regionCluster, p.pausaCluster, inicioRel));
+
+        // Capa 3 — nodos, relativos a su clúster. El CH (índice 0) va fijo en
+        // el centro; los miembros arrancan en un anillo y caminan al azar.
+        for (uint32_t i = 0; i < red.clusters[k].GetN(); ++i)
         {
-            double ang = 2.0 * M_PI * m / miembrosPorCluster;
-            pos->Add(Vector(cx + p.radioInicialNodos * std::cos(ang),
-                            cy + p.radioInicialNodos * std::sin(ang),
-                            0.0));
+            Ptr<MobilityModel> movNodo;
+            if (i == 0)
+            {
+                Ptr<ConstantPositionMobilityModel> centro =
+                    CreateObject<ConstantPositionMobilityModel>();
+                centro->SetPosition(Vector(0, 0, 0));
+                movNodo = centro;
+            }
+            else
+            {
+                double ang = 2.0 * M_PI * (i - 1) / miembrosPorCluster;
+                Vector inicio(p.radioInicialNodos * std::cos(ang),
+                              p.radioInicialNodos * std::sin(ang),
+                              0.0);
+                movNodo = CrearCaminata(p.nodeSpeed, p.regionNodo, p.pasoNodo, inicio);
+            }
+            red.clusters[k].Get(i)->AggregateObject(Anidar(movCluster, movNodo));
+        }
+    }
+}
+
+// Validación de la Parte 2 (--trazaPosiciones=T): cada T segundos guarda la
+// posición de los 20 nodos en
+//   <outDir>/posiciones_<scenario>_cs<clusterSpeed>_ns<nodeSpeed>_run<RngRun>.csv
+// (columnas t,nodo,cluster,super,indice,x,y; indice 0 = CH) y, cada 10 s,
+// imprime en consola la posición de cada CH y la distancia del miembro 1 a su
+// CH: si el CH cambia de lugar se mueve el clúster; si cambia la distancia, se
+// mueve el nodo. scripts/validar_movilidad.py revisa el CSV automáticamente.
+static std::ofstream g_posiciones;
+
+static void
+TrazarPosiciones(const Parametros& p, const RedJerarquica& red, uint32_t paso)
+{
+    double t = Simulator::Now().GetSeconds();
+    for (uint32_t k = 0; k < p.numClusters; ++k)
+    {
+        for (uint32_t i = 0; i < red.clusters[k].GetN(); ++i)
+        {
+            Ptr<Node> n = red.clusters[k].Get(i);
+            Vector v = n->GetObject<MobilityModel>()->GetPosition();
+            g_posiciones << t << "," << n->GetId() << "," << red.nombreCluster[k] << ","
+                         << red.nombreSuper[red.SuperDe(k, p.clustersPorSuper)] << "," << i << ","
+                         << v.x << "," << v.y << "\n";
         }
     }
 
-    MobilityHelper movilidad;
-    movilidad.SetPositionAllocator(pos);
-    movilidad.SetMobilityModel("ns3::ConstantPositionMobilityModel");
-    movilidad.Install(red.todos);
+    uint32_t cadaConsola = std::max<uint32_t>(1, std::lround(10.0 / p.trazaPosiciones));
+    if (paso % cadaConsola == 0)
+    {
+        std::cout << "t=" << std::fixed << std::setprecision(0) << std::setw(4) << t << " s";
+        for (uint32_t k = 0; k < p.numClusters; ++k)
+        {
+            Vector ch = red.clusters[k].Get(0)->GetObject<MobilityModel>()->GetPosition();
+            Vector m1 = red.clusters[k].Get(1)->GetObject<MobilityModel>()->GetPosition();
+            double d = std::hypot(m1.x - ch.x, m1.y - ch.y);
+            std::cout << " | " << red.nombreCluster[k] << ": CH(" << std::setw(4) << ch.x << ","
+                      << std::setw(4) << ch.y << ") m1 a " << std::setw(2) << d << " m";
+        }
+        std::cout << "\n";
+    }
+
+    if (t + p.trazaPosiciones <= p.simTime + 1e-9)
+    {
+        Simulator::Schedule(Seconds(p.trazaPosiciones), &TrazarPosiciones, std::cref(p),
+                            std::cref(red), paso + 1);
+    }
+}
+
+static void
+IniciarTrazaPosiciones(const Parametros& p, const RedJerarquica& red)
+{
+    std::filesystem::create_directories(p.outDir);
+    std::ostringstream nombre;
+    nombre << p.outDir << "/posiciones_" << p.scenario << "_cs" << p.clusterSpeed << "_ns"
+           << p.nodeSpeed << "_run" << RngSeedManager::GetRun() << ".csv";
+    g_posiciones.open(nombre.str());
+    g_posiciones << std::setprecision(10) << "t,nodo,cluster,super,indice,x,y\n";
+    std::cout << "Traza de posiciones: " << nombre.str() << "\n";
+    Simulator::Schedule(Seconds(0.0), &TrazarPosiciones, std::cref(p), std::cref(red), 0u);
 }
 
 // =============================================================================
@@ -640,6 +851,9 @@ main(int argc, char* argv[])
     cmd.AddValue("verificar", "Ejecutar la prueba de conectividad de la Parte 1", p.verificar);
     cmd.AddValue("rangoCluster", "Alcance efectivo dentro del clúster (m)", p.rangoCluster);
     cmd.AddValue("rangoBackbone", "Alcance efectivo del backbone entre CH (m)", p.rangoBackbone);
+    cmd.AddValue("regionCluster", "Semiancho de la región de movimiento del clúster (m)", p.regionCluster);
+    cmd.AddValue("regionNodo", "Semiancho de la región de movimiento del nodo (m)", p.regionNodo);
+    cmd.AddValue("trazaPosiciones", "Imprimir posiciones cada T segundos (0 = no)", p.trazaPosiciones);
     cmd.Parse(argc, argv);
 
     RedJerarquica red;
@@ -650,6 +864,11 @@ main(int argc, char* argv[])
     ConfigurarMetricas(p, red);  // Parte 3
 
     ImprimirTopologia(p, red);
+
+    if (p.trazaPosiciones > 0.0)
+    {
+        IniciarTrazaPosiciones(p, red); // Parte 2
+    }
 
     if (p.verificar)
     {

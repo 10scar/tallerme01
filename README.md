@@ -188,9 +188,9 @@ El trabajo está organizado como una **cadena**: cada parte solo depende de las 
 | # | Integrante | Parte | Recibe de | Entrega a |
 |---|---|---|---|---|
 | 1 | **David Fernando Benjumea Mora** | Formulación científica y red base en ns-3 | — | 2 |
-| 2 | **José Esteban Alvarado Monroy** | Movilidad jerárquica | 1 | 3 |
+| 2 | **Daniel Alonso Gracia Pinto** | Movilidad jerárquica | 1 | 3 |
 | 3 | **Stephan Alain Roland García Martiquet** | Tráfico, métricas y validación del programa | 2 | 4, 5 |
-| 4 | **Daniel Alonso Gracia Pinto** | Automatización de experimentos y gráficas | 3 | 5, 6, 7 |
+| 4 | **José Esteban Alvarado Monroy** | Automatización de experimentos y gráficas | 3 | 5, 6, 7 |
 | 5 | **Óscar Iván Ulises Gutiérrez Palacios** | LaTeX, diseño de la solución y manual técnico | 3, 4 | 6, 7 |
 | 6 | **John Jairo Páez Albino** | Marco teórico, referencias y manual de usuario | 4, 5 | 7 |
 | 7 | **Daniel Santiago Rodríguez Rodríguez** | Análisis, conclusiones, revisión final y entrega | 1, 4, 5, 6 | Profesor |
@@ -249,17 +249,17 @@ Debe terminar con `Total: 120/120 (100.0 %)` y `RESULTADO: la red jerárquica es
 - Con movilidad de nodo, un miembro puede quedar a más de 60 m de su CH. AODV puede rodear ese corte usando otros miembros del mismo clúster como intermediarios.
 
 ### Parte 2 — Movilidad jerárquica
-**Responsable:** José Esteban Alvarado Monroy
+**Responsable:** Daniel Alonso Gracia Pinto
 **Archivos:** `simulacion/manet-jerarquica.cc` (función `ConfigurarMovilidad`)
 **Recibe de la Parte 1:** el `.cc` con nodos, clústeres y red.
 
-- [ ] Implementar la movilidad en tres capas con `HierarchicalMobilityModel` anidado (sección 2.3).
-- [ ] Movilidad de superclúster y de clúster con velocidad `clusterSpeed`; movilidad de nodo con `nodeSpeed`, acotada alrededor del centro de su clúster.
-- [ ] Que `clusterSpeed=0` y `nodeSpeed=0` dejen quieta la capa correspondiente.
-- [ ] Ajustar distancias (área, radio de clúster, separación entre clústeres) para que sin movimiento la red esté conectada.
-- [ ] Prueba de validación: imprimir posiciones en el tiempo para mostrar que se mueven clústeres y nodos.
-- [ ] Escribir una nota corta (en el código o en un `.md`) que explique la movilidad: la usarán las Partes 3 y 5.
-- [ ] **Entrega a la Parte 3:** el `.cc` con red + movilidad funcionando.
+- [x] Implementar la movilidad en tres capas con `HierarchicalMobilityModel` anidado (sección 2.3).
+- [x] Movilidad de superclúster y de clúster con velocidad `clusterSpeed`; movilidad de nodo con `nodeSpeed`, acotada alrededor del centro de su clúster.
+- [x] Que `clusterSpeed=0` y `nodeSpeed=0` dejen quieta la capa correspondiente.
+- [x] Ajustar distancias (área, radio de clúster, separación entre clústeres) para que sin movimiento la red esté conectada. *No hizo falta cambiarlas: con la geometría de la sección 2.7, E0 entrega 120/120 en `--verificar` y 5901/5901 paquetes de datos.*
+- [x] Prueba de validación: imprimir posiciones en el tiempo para mostrar que se mueven clústeres y nodos. *`--trazaPosiciones=T` las imprime y las guarda en CSV; `scripts/validar_movilidad.py` las revisa automáticamente (46/46 pruebas).*
+- [x] Escribir una nota corta (en el código o en un `.md`) que explique la movilidad: la usarán las Partes 3 y 5. *Comentario sobre `ConfigurarMovilidad()` en el `.cc`.*
+- [x] **Entrega a la Parte 3:** el `.cc` con red + movilidad funcionando. *Rama `parte2-movilidad`, construida sobre la rama `P3`.*
 
 ### Parte 3 — Tráfico, métricas y validación del programa
 **Responsable:** Stephan Alain Roland García Martiquet
@@ -273,7 +273,7 @@ Debe terminar con `Total: 120/120 (100.0 %)` y `RESULTADO: la red jerárquica es
 - [x] Redactar la sección **Código fuente**: estructura del programa, funciones principales, fragmentos clave y versiones usadas.
 - [x] **Entrega a la Parte 4:** el programa final, listo para correr experimentos.
 
-#### Nota de entrega de la Parte 3 → Parte 4 (Daniel)
+#### Nota de entrega de la Parte 3 → Parte 4 (José)
 
 **El programa ya está listo para tus scripts de simulación y gráficas.**
 
@@ -298,7 +298,7 @@ Debe terminar con `Total: 120/120 (100.0 %)` y `RESULTADO: la red jerárquica es
    Se redactó `secciones/05-codigo-fuente.tex` con todo el detalle de software, arquitectura del código, ecuaciones de cálculo, fragmentos clave y la validación en E0. Óscar (Parte 5) solo debe incluirla en `Entregable.tex` con `\input{secciones/05-codigo-fuente.tex}`.
 
 ### Parte 4 — Automatización de experimentos y gráficas
-**Responsable:** Daniel Alonso Gracia Pinto
+**Responsable:** José Esteban Alvarado Monroy
 **Archivos:** `scripts/correr_escenarios.sh`, `scripts/parse_flowmon.py`, `scripts/graficar.py`, `resultados/`
 **Recibe de la Parte 3:** el programa final.
 
