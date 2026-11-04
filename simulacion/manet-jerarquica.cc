@@ -62,9 +62,12 @@
 #include "ns3/network-module.h"
 #include "ns3/wifi-module.h"
 
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -293,34 +296,206 @@ ConfigurarMovilidad(const Parametros& p, RedJerarquica& red)
 // =============================================================================
 //  Parte 3 — Tráfico   >>> RESPONSABLE: Parte 3 <<<
 //
-//  Lo que debe hacer (README, sección 2.7):
-//    8 flujos UDP OnOff CBR, 512 B, 4 paquetes/s, entre miembros:
-//      A→B, B→A, C→D, D→C  (dentro de cada superclúster)
-//      A→C, B→D, C→A, D→B  (entre superclústeres)
-//    Inicio uniforme en [10, 11] s, fin a los 195 s.
+//  8 flujos UDP OnOff CBR (README, sección 2.7): 512 B a 4 paquetes/s, es
+//  decir 16 384 bit/s por flujo, siempre de miembro a miembro:
+//    A1→B1, B1→A1, C1→D1, D1→C1  (dentro de cada superclúster, miembro 1)
+//    A2→C2, B2→D2, C2→A2, D2→B2  (entre superclústeres, miembro 2)
+//
+//  Los CH no generan ni reciben tráfico: solo reenvían por el backbone.
+//  Cada flujo arranca en un instante uniforme en [10, 11] s (AODV ya se
+//  estabilizó y los flujos no salen todos a la vez) y se detiene a los 195 s,
+//  para que los últimos paquetes alcancen a llegar antes del fin.
+//  Con --verificar=true no se instala: solo corre la prueba de la Parte 1.
 // =============================================================================
-static void
-ConfigurarTrafico(const Parametros& /*p*/, RedJerarquica& /*red*/)
+static const double INICIO_TRAFICO_MIN = 10.0;
+static const double INICIO_TRAFICO_MAX = 11.0;
+static const double FIN_TRAFICO = 195.0;
+
+struct Flujo
 {
-    // TODO (Parte 3)
+    uint32_t clusterOrigen;
+    uint32_t miembroOrigen;
+    uint32_t clusterDestino;
+    uint32_t miembroDestino;
+};
+
+static void
+ConfigurarTrafico(const Parametros& p, RedJerarquica& red)
+{
+    if (p.verificar)
+    {
+        return;
+    }
+
+    const std::vector<Flujo> flujos = {
+        {0, 1, 1, 1}, // A1 -> B1
+        {1, 1, 0, 1}, // B1 -> A1
+        {2, 1, 3, 1}, // C1 -> D1
+        {3, 1, 2, 1}, // D1 -> C1
+        {0, 2, 2, 2}, // A2 -> C2
+        {1, 2, 3, 2}, // B2 -> D2
+        {2, 2, 0, 2}, // C2 -> A2
+        {3, 2, 1, 2}, // D2 -> B2
+    };
+
+    // Si simTime es corto (pruebas rápidas), el tráfico termina 5 s antes del fin.
+    double fin = std::min(FIN_TRAFICO, p.simTime - 5.0);
+
+    Ptr<UniformRandomVariable> inicio = CreateObject<UniformRandomVariable>();
+    inicio->SetAttribute("Min", DoubleValue(INICIO_TRAFICO_MIN));
+    inicio->SetAttribute("Max", DoubleValue(INICIO_TRAFICO_MAX));
+
+    const uint16_t puertoBase = 5000;
+    for (uint32_t f = 0; f < flujos.size(); ++f)
+    {
+        const Flujo& fl = flujos[f];
+        uint16_t puerto = puertoBase + f;
+        Ipv4Address ipDestino = red.ifCluster[fl.clusterDestino].GetAddress(fl.miembroDestino);
+
+        // Receptor en el miembro destino.
+        PacketSinkHelper sumidero("ns3::UdpSocketFactory",
+                                  InetSocketAddress(Ipv4Address::GetAny(), puerto));
+        ApplicationContainer appRx =
+            sumidero.Install(red.clusters[fl.clusterDestino].Get(fl.miembroDestino));
+        appRx.Start(Seconds(0.0));
+        appRx.Stop(Seconds(p.simTime));
+
+        // Emisor CBR: siempre encendido (OffTime = 0).
+        OnOffHelper emisor("ns3::UdpSocketFactory", InetSocketAddress(ipDestino, puerto));
+        emisor.SetAttribute("PacketSize", UintegerValue(512));
+        emisor.SetAttribute("DataRate", DataRateValue(DataRate("16384bps")));
+        emisor.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+        emisor.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
+
+        ApplicationContainer appTx =
+            emisor.Install(red.clusters[fl.clusterOrigen].Get(fl.miembroOrigen));
+        appTx.Start(Seconds(inicio->GetValue()));
+        appTx.Stop(Seconds(fin));
+    }
 }
 
 // =============================================================================
 //  Parte 3 — Métricas   >>> RESPONSABLE: Parte 3 <<<
 //
-//  Instalar FlowMonitor antes de Simulator::Run() y, al final, guardar el XML
-//  en <outDir>/<scenario>_cs<clusterSpeed>_ns<nodeSpeed>_run<RngRun>.xml
+//  FlowMonitor se instala antes de Simulator::Run() y, al final, se guarda el
+//  XML en <outDir>/<scenario>_cs<clusterSpeed>_ns<nodeSpeed>_run<RngRun>.xml
+//  Además se imprime un resumen (PDR, retardo, throughput, jitter) calculado
+//  con las mismas fórmulas del README, para comparar con parse_flowmon.py.
 // =============================================================================
+static FlowMonitorHelper g_flowHelper;
+static Ptr<FlowMonitor> g_monitor;
+
 static void
-ConfigurarMetricas(const Parametros& /*p*/, RedJerarquica& /*red*/)
+ConfigurarMetricas(const Parametros& p, RedJerarquica& /*red*/)
 {
-    // TODO (Parte 3)
+    if (p.verificar)
+    {
+        return;
+    }
+    g_monitor = g_flowHelper.InstallAll();
+}
+
+static std::string
+NombreSalida(const Parametros& p, const std::string& prefijo)
+{
+    std::ostringstream nombre;
+    nombre << p.outDir << "/" << prefijo << p.scenario << "_cs" << p.clusterSpeed << "_ns"
+           << p.nodeSpeed << "_run" << RngSeedManager::GetRun() << ".xml";
+    return nombre.str();
 }
 
 static void
-GuardarMetricas(const Parametros& /*p*/)
+GuardarMetricas(const Parametros& p)
 {
-    // TODO (Parte 3)
+    if (p.verificar || !g_monitor)
+    {
+        return;
+    }
+
+    std::filesystem::create_directories(p.outDir);
+    std::string archivo = NombreSalida(p, "");
+
+    g_monitor->CheckForLostPackets();
+    g_monitor->SerializeToXmlFile(archivo, true, true);
+
+    uint64_t tx = 0;
+    uint64_t rx = 0;
+    uint64_t rxBytes = 0;
+    uint64_t rxParaJitter = 0;
+    double retardo = 0.0;
+    double jitter = 0.0;
+    for (const auto& [id, st] : g_monitor->GetFlowStats())
+    {
+        tx += st.txPackets;
+        rx += st.rxPackets;
+        rxBytes += st.rxBytes;
+        retardo += st.delaySum.GetSeconds();
+        jitter += st.jitterSum.GetSeconds();
+        if (st.rxPackets > 1)
+        {
+            rxParaJitter += st.rxPackets - 1;
+        }
+    }
+
+    double duracion = std::min(FIN_TRAFICO, p.simTime - 5.0) - INICIO_TRAFICO_MIN;
+    double pdr = tx > 0 ? 100.0 * rx / tx : 0.0;
+    double retardoMedio = rx > 0 ? retardo / rx : 0.0;
+    double throughput = duracion > 0 ? 8.0 * rxBytes / duracion / 1000.0 : 0.0;
+    double jitterMedio = rxParaJitter > 0 ? jitter / rxParaJitter : 0.0;
+
+    std::cout << "\n=== Métricas (FlowMonitor) ===\n";
+    std::cout << " Archivo:    " << archivo << "\n";
+    std::cout << " Paquetes:   " << rx << "/" << tx << " recibidos\n";
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << " PDR:        " << pdr << " %\n";
+    std::cout << " Throughput: " << throughput << " kbit/s\n";
+    std::cout << std::setprecision(4);
+    std::cout << " Retardo:    " << retardoMedio << " s\n";
+    std::cout << " Jitter:     " << jitterMedio << " s\n";
+}
+
+// =============================================================================
+//  Parte 3 — NetAnim (--netanim=true)   >>> RESPONSABLE: Parte 3 <<<
+//
+//  Traza en <outDir>/netanim_<...>.xml. Los CH se dibujan en rojo y más
+//  grandes; los miembros en azul. AnimationInterface debe existir antes de
+//  Simulator::Run(), por eso se guarda en una variable global.
+// =============================================================================
+static std::unique_ptr<AnimationInterface> g_anim;
+
+static void
+ConfigurarNetAnim(const Parametros& p, const RedJerarquica& red)
+{
+    if (!p.netanim)
+    {
+        return;
+    }
+
+    std::filesystem::create_directories(p.outDir);
+    std::string archivo = NombreSalida(p, "netanim_");
+    g_anim = std::make_unique<AnimationInterface>(archivo);
+
+    for (uint32_t k = 0; k < p.numClusters; ++k)
+    {
+        for (uint32_t i = 0; i < red.clusters[k].GetN(); ++i)
+        {
+            Ptr<Node> n = red.clusters[k].Get(i);
+            bool esCH = (i == 0);
+            g_anim->UpdateNodeDescription(n, red.nombreCluster[k] + std::to_string(i) +
+                                                 (esCH ? " [CH]" : ""));
+            if (esCH)
+            {
+                g_anim->UpdateNodeColor(n, 220, 20, 60);
+                g_anim->UpdateNodeSize(n->GetId(), 6.0, 6.0);
+            }
+            else
+            {
+                g_anim->UpdateNodeColor(n, 30, 144, 255);
+                g_anim->UpdateNodeSize(n->GetId(), 3.5, 3.5);
+            }
+        }
+    }
+    std::cout << "Traza NetAnim: " << archivo << "\n";
 }
 
 // =============================================================================
@@ -482,6 +657,7 @@ main(int argc, char* argv[])
     }
 
     // NetAnim (Parte 3): AnimationInterface debe crearse antes de Run().
+    ConfigurarNetAnim(p, red);   // Parte 3
 
     Simulator::Stop(Seconds(p.simTime));
     Simulator::Run();
@@ -494,6 +670,7 @@ main(int argc, char* argv[])
         codigo = ReportarPruebaConectividad(p, red) ? 0 : 1;
     }
 
+    g_anim.reset(); // Parte 3
     Simulator::Destroy();
     return codigo;
 }

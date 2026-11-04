@@ -266,12 +266,36 @@ Debe terminar con `Total: 120/120 (100.0 %)` y `RESULTADO: la red jerárquica es
 **Archivos:** `simulacion/manet-jerarquica.cc` (tráfico, FlowMonitor, NetAnim), `secciones/05-codigo-fuente.tex`
 **Recibe de la Parte 2:** el `.cc` con red y movilidad.
 
-- [ ] Tráfico UDP `OnOff` entre miembros de clústeres distintos (incluir pares X↔Y), arrancando unos segundos después para que AODV se estabilice.
-- [ ] Instalar **FlowMonitor** y guardar el XML con el nombre de la sección 2.5.
-- [ ] Opcional: traza de **NetAnim** (`--netanim=true`) y una captura para el informe.
-- [ ] Validar el programa completo con una corrida de cada escenario (E0–E3): que no falle, que genere el XML y que en E0 la PDR sea alta.
-- [ ] Redactar la sección **Código fuente**: estructura del programa, funciones principales, fragmentos clave y versiones usadas.
-- [ ] **Entrega a la Parte 4:** el programa final, listo para correr experimentos.
+- [x] Tráfico UDP `OnOff` entre miembros de clústeres distintos (incluir pares X↔Y), arrancando unos segundos después para que AODV se estabilice.
+- [x] Instalar **FlowMonitor** y guardar el XML con el nombre de la sección 2.5.
+- [x] Opcional: traza de **NetAnim** (`--netanim=true`) y una captura para el informe.
+- [x] Validar el programa completo con una corrida de cada escenario (E0–E3): que no falle, que genere el XML y que en E0 la PDR sea alta.
+- [x] Redactar la sección **Código fuente**: estructura del programa, funciones principales, fragmentos clave y versiones usadas.
+- [x] **Entrega a la Parte 4:** el programa final, listo para correr experimentos.
+
+#### Nota de entrega de la Parte 3 → Parte 4 (Daniel)
+
+**El programa ya está listo para tus scripts de simulación y gráficas.**
+
+1. **Cómo correr una simulación individual:**
+   ```bash
+   cp "simulacion/manet-jerarquica.cc" scratch/
+   ./ns3 run "scratch/manet-jerarquica --scenario=E3 --clusterSpeed=5 --nodeSpeed=5 --simTime=200 --RngRun=1 --outDir=resultados/raw"
+   ```
+2. **Archivos generados:**
+   - FlowMonitor exporta automáticamente a:
+     `resultados/raw/<scenario>_cs<clusterSpeed>_ns<nodeSpeed>_run<RngRun>.xml`
+   - La carpeta `resultados/raw/` se crea automáticamente si no existe.
+   - Si activas `--netanim=true`, genera además `resultados/raw/netanim_<scenario>_cs<clusterSpeed>_ns<nodeSpeed>_run<RngRun>.xml` con los CH resaltados en rojo y miembros en azul.
+3. **Resumen en consola:**
+   Al terminar cada ejecución, el programa imprime en terminal un bloque con el conteo de flujos, paquetes TX/RX, PDR (\%), retardo medio (s), throughput (kbps) y jitter (s). Te sirve para validar rápidamente que tu script `parse_flowmon.py` esté extrayendo exactamente los mismos valores numéricos desde los XML.
+4. **Tráfico configurado:**
+   - 8 flujos UDP OnOff CBR de 512 bytes @ 4 paq/s (16 kbps).
+   - Pares intra-superclúster (miembros 1): A1↔B1, C1↔D1.
+   - Pares inter-superclúster (miembros 2): A2→C2, B2→D2, C2→A2, D2→B2.
+   - Los flujos inician con desfase uniforme entre 10.0 y 11.0 s y finalizan a los 195 s.
+5. **Sección de informe lista:**
+   Se redactó `secciones/05-codigo-fuente.tex` con todo el detalle de software, arquitectura del código, ecuaciones de cálculo, fragmentos clave y la validación en E0. Óscar (Parte 5) solo debe incluirla en `Entregable.tex` con `\input{secciones/05-codigo-fuente.tex}`.
 
 ### Parte 4 — Automatización de experimentos y gráficas
 **Responsable:** Daniel Alonso Gracia Pinto
