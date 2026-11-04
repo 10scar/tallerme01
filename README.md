@@ -24,14 +24,16 @@ Según el enunciado y la plantilla de "tarea automatizada" del curso, los entreg
 
 ## 2. Diseño propuesto (contrato común)
 
-Estas decisiones permiten que el código, los scripts y el informe encajen entre sí. La **Parte 1** las revisa y las fija al comienzo; una vez fijadas, no se cambian sin avisar al grupo.
+Estas decisiones permiten que el código, los scripts y el informe encajen entre sí. **Estado: fijado por la Parte 1.** No se cambia sin avisar al grupo. El detalle formal está en `secciones/02-pregunta-hipotesis.tex`.
 
-### 2.1 Pregunta de investigación (borrador)
+### 2.1 Pregunta de investigación e hipótesis
 
 > *En una MANET jerárquica de dos niveles con enrutamiento AODV, ¿qué degrada más el desempeño de la red —la movilidad a nivel de clúster o la movilidad a nivel de nodo— y cómo cambia ese efecto al aumentar la velocidad?*
 
-- **Hipótesis (borrador):** la movilidad de clúster degrada más la tasa de entrega (PDR) y el retardo que la movilidad de nodo a la misma velocidad, porque rompe los enlaces entre *cluster heads* (la columna vertebral de la red), mientras que la movilidad de nodo solo altera rutas locales dentro del clúster.
-- **Variables independientes:** tipo de movilidad (nodo / clúster / ambas) y velocidad.
+- **Hipótesis principal:** la movilidad de clúster degrada más la tasa de entrega (PDR) y el retardo que la movilidad de nodo a la misma velocidad, porque rompe los enlaces entre *cluster heads* (la columna vertebral de la red), mientras que la movilidad de nodo solo altera rutas locales dentro del clúster.
+- **Formalmente**, para cada velocidad v: H₀: PDR(E2) = PDR(E1) contra H₁: PDR(E2) < PDR(E1); y H₀: retardo(E2) = retardo(E1) contra H₁: retardo(E2) > retardo(E1).
+- **Hipótesis secundarias:** el desempeño empeora con la velocidad (HS1); E3 es igual o peor que el peor de E1 y E2 (HS2); la diferencia entre E1 y E2 crece con la velocidad (HS3).
+- **Variables independientes:** tipo de movilidad (ninguna / nodo / clúster / ambas) y velocidad.
 - **Variables dependientes:** PDR, retardo extremo a extremo promedio, throughput y *jitter* (todas desde FlowMonitor).
 - **Variables controladas:** número de nodos, área, protocolo (AODV), tráfico, potencia de transmisión, tiempo de simulación.
 
@@ -52,12 +54,13 @@ Estas decisiones permiten que el código, los scripts y el informe encajen entre
 ns-3 permite anidar `HierarchicalMobilityModel` (el "padre" de un modelo puede ser otro modelo jerárquico):
 
 ```
-Superclúster (X, Y)   → punto de referencia que se mueve (p. ej. RandomWaypoint en el área total)
-   └── Clúster (A..D) → se mueve RELATIVO a su superclúster (movilidad de clúster)
-         └── Nodo     → se mueve RELATIVO a su clúster (movilidad de nodo, p. ej. RandomWalk2d acotado)
+Superclúster (X, Y)   → punto de referencia FIJO en los experimentos (se puede mover con --superSpeed)
+   └── Clúster (A..D) → RandomWaypoint relativo a su superclúster, región ±150 m, velocidad clusterSpeed, pausa 2 s
+         └── Nodo     → RandomWalk2d relativo a su clúster, región ±40 m, velocidad nodeSpeed
 ```
 
 - `clusterSpeed = 0` desactiva el movimiento de clúster; `nodeSpeed = 0` desactiva el de nodo.
+- **Por qué los superclústeres quedan fijos:** para que E1 y E2 sean comparables, en cada uno se mueve **una sola capa** a la misma velocidad v. El programa igual debe permitir mover los superclústeres (`--superSpeed`, por defecto 0).
 
 ### 2.4 Escenarios (mínimo 3, se piden al menos 3)
 
@@ -69,7 +72,10 @@ Superclúster (X, Y)   → punto de referencia que se mueve (p. ej. RandomWaypoi
 | E3 | Sí | Sí | Efecto combinado |
 
 - Cada escenario con movimiento se corre para velocidades **v ∈ {1, 5, 10, 20} m/s**.
-- **10 réplicas por configuración** (semillas distintas con `--RngRun`) → se reportan medias con **intervalos de confianza del 95 %** (t de Student).
+- E0 no tiene movimiento, así que se corre una sola vez (sin barrido de velocidades).
+- **10 réplicas por configuración** (semillas distintas con `--RngRun`): (3 × 4 + 1) × 10 = **130 corridas**.
+- Análisis: medias con **intervalos de confianza del 95 %** (t de Student, t₀.₉₇₅,₉ ≈ 2.262) y **prueba t de Welch unilateral** E2 vs. E1 por velocidad con α = 0.05.
+- **Regla de decisión:** la hipótesis principal se respalda si se rechaza H₀ en al menos 3 de las 4 velocidades.
 
 ### 2.5 Interfaz del programa (para que el código y los scripts encajen)
 
@@ -85,6 +91,7 @@ Archivo: `simulacion/manet-jerarquica.cc` (se copia a `scratch/` de ns-3).
 | `--scenario` | string | `E3` | Etiqueta del escenario (E0–E3) |
 | `--clusterSpeed` | double | `5` | Velocidad de movilidad de clúster (m/s) |
 | `--nodeSpeed` | double | `5` | Velocidad de movilidad de nodo (m/s) |
+| `--superSpeed` | double | `0` | Velocidad de los superclústeres (m/s); 0 en todos los experimentos |
 | `--simTime` | double | `200` | Duración de la simulación (s) |
 | `--RngRun` | int | `1` | Réplica (semilla) |
 | `--outDir` | string | `resultados/raw` | Carpeta de salida |
@@ -94,9 +101,32 @@ Archivo: `simulacion/manet-jerarquica.cc` (se copia a `scratch/` de ns-3).
 
 ### 2.6 Versiones
 
-- **ns-3:** se acuerda **una sola versión** para todo el grupo (3.43-ai, la del video del profesor, o 3.46). Quien compile y corra los experimentos la deja escrita aquí: `ns-3 versión: ______`.
-- **Sistema:** Ubuntu 22.04/24.04 o WSL2.
+- **ns-3: versión 3.43** (`ns-3 versión: 3.43`). Es la versión de los videos de instalación del profesor, así que si alguien tiene problemas puede seguir esa guía paso a paso. Se instala con el componente AI como recomienda el correo, aunque ns3-ai no se usa en el código. Todo el grupo usa esta misma versión.
+- **Sistema:** Ubuntu 22.04 (nativo o WSL2 en Windows).
+- **Compilador:** el que trae Ubuntu 22.04 (g++ 11), con CMake y el script `./ns3` de ns-3.
 - **Python:** 3.10+ con `pandas`, `matplotlib`, `scipy`.
+
+### 2.7 Parámetros constantes
+
+| Parámetro | Valor |
+|---|---|
+| Nodos | 20: 4 clústeres × 5 (1 CH fijo + 4 miembros) |
+| WiFi | 802.11b ad hoc, tasa fija DSSS 1 Mbps (`ConstantRateWifiManager`), potencia por defecto |
+| Propagación | Por defecto de `YansWifiChannelHelper` (log-distancia + retardo de velocidad constante) |
+| Canales | 1 `YansWifiChannel` por clúster + 1 backbone para los 4 CH |
+| Enrutamiento | AODV con parámetros por defecto |
+| Tráfico | 8 flujos UDP `OnOff` CBR, 512 B, 4 paquetes/s (16 kbit/s cada uno) |
+| Pares (miembro → miembro) | A→B, B→A, C→D, D→C (dentro de superclúster); A→C, B→D, C→A, D→B (entre superclústeres) |
+| Tiempos | Simulación 200 s; tráfico desde un instante uniforme en [10, 11] s hasta 195 s |
+| Posiciones iniciales | Superclústeres en (350, 300) y (650, 300) m; clústeres en x = 275, 425, 575, 725 m sobre y = 300 m |
+
+> Los valores geométricos son **de partida**. Si en E0 la PDR da menos del 95 %, la Parte 2 los ajusta para que la red quede conectada y documenta el cambio aquí.
+
+**Métricas** (sumando sobre todos los flujos de una corrida, con los campos del XML de FlowMonitor):
+- PDR = Σ rxPackets / Σ txPackets
+- Retardo medio = Σ delaySum / Σ rxPackets
+- Throughput = 8 · Σ rxBytes / (fin − inicio del tráfico)
+- Jitter medio = Σ jitterSum / Σ (rxPackets − 1)
 
 ---
 
@@ -159,10 +189,12 @@ El trabajo está organizado como una **cadena**: cada parte solo depende de las 
 **Responsable:** David Fernando Benjumea Mora
 **Archivos:** `secciones/01-problema.tex`, `secciones/02-pregunta-hipotesis.tex`, `simulacion/manet-jerarquica.cc` (esqueleto y red), este `README.md`
 
+> `referencias.bib` ya tiene las entradas que citan las secciones de la Parte 1 (es de la Parte 6, que lo completa sin cambiar las claves).
+
 No depende de nadie; es el punto de partida de toda la cadena.
 
-- [ ] Fijar la pregunta de investigación, la hipótesis, las variables, los escenarios, las velocidades, el número de réplicas y los parámetros constantes (sección 2).
-- [ ] Fijar la versión de ns-3 del grupo y escribirla en la sección 2.6.
+- [x] Fijar la pregunta de investigación, la hipótesis, las variables, los escenarios, las velocidades, el número de réplicas y los parámetros constantes (sección 2).
+- [x] Fijar la versión de ns-3 del grupo y escribirla en la sección 2.6.
 - [ ] Crear `simulacion/manet-jerarquica.cc` con:
   - Todos los parámetros de la sección 2.5 (`CommandLine`).
   - Los 20 nodos agrupados en 4 clústeres y 2 superclústeres (`NodeContainer` por grupo, CH identificados).
@@ -170,8 +202,8 @@ No depende de nadie; es el punto de partida de toda la cadena.
   - Pila de internet con **AODV** y direccionamiento por subredes (sección 2.2).
   - Una función vacía `ConfigurarMovilidad(...)` donde la Parte 2 conecta la movilidad (mientras tanto, posiciones fijas).
 - [ ] Verificar que compila y corre en la versión acordada.
-- [ ] Redactar **Descripción y justificación del problema** (por qué importa la movilidad en MANETs jerárquicas, conexión con el artículo de Ospina y Ortiz).
-- [ ] Redactar **Pregunta de investigación e hipótesis**, explicando el método científico aplicado (observación → pregunta → hipótesis → experimento → análisis → conclusión).
+- [x] Redactar **Descripción y justificación del problema** (por qué importa la movilidad en MANETs jerárquicas, conexión con el artículo de Ospina y Ortiz).
+- [x] Redactar **Pregunta de investigación e hipótesis**, explicando el método científico aplicado (observación → pregunta → hipótesis → experimento → análisis → conclusión).
 - [ ] **Entrega a la Parte 2:** el `.cc` con la red funcionando y una nota de cómo está organizado.
 
 ### Parte 2 — Movilidad jerárquica

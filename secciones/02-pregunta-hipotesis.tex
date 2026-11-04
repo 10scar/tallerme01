@@ -1,0 +1,204 @@
+% =====================================================================
+% Sección: Pregunta de investigación, hipótesis y diseño experimental
+% Responsable: Parte 1 — David Fernando Benjumea Mora
+% =====================================================================
+\section{Pregunta de investigación e hipótesis}
+\label{sec:pregunta}
+
+\subsection{Método científico aplicado}
+
+El trabajo sigue las etapas del método científico \cite{bunge1995ciencia}. La
+tabla~\ref{tab:metodo} resume cómo se concreta cada una.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{2.6cm}p{9.4cm}}
+\toprule
+\textbf{Etapa} & \textbf{En este trabajo} \\
+\midrule
+Observación & En una MANET jerárquica la movilidad ocurre en dos niveles (clúster y
+nodo), que afectan enlaces de naturaleza distinta (backbone y enlaces locales). \\
+Pregunta & ¿Cuál de los dos niveles de movilidad degrada más el desempeño, y cómo
+depende de la velocidad? (sección~\ref{sec:preg}) \\
+Hipótesis & La movilidad de clúster degrada más que la de nodo
+(sección~\ref{sec:hip}). \\
+Predicción & Con la misma velocidad, la PDR del escenario con solo movilidad de clúster
+será menor y su retardo mayor que en el escenario con solo movilidad de nodo. \\
+Experimento & Simulación controlada en ns-3 con cuatro escenarios, cuatro velocidades y
+diez réplicas por configuración (sección~\ref{sec:diseno-exp}). \\
+Análisis & Medias, intervalos de confianza del 95\,\% y pruebas $t$ de Welch
+(sección~\ref{sec:analisis-est}). \\
+Conclusión & Se acepta o se rechaza la hipótesis según la regla de decisión
+definida de antemano. \\
+\bottomrule
+\end{tabular}
+\caption{Etapas del método científico aplicadas al estudio.}
+\label{tab:metodo}
+\end{table}
+
+\subsection{Pregunta de investigación}
+\label{sec:preg}
+
+\begin{quote}
+\emph{En una MANET jerárquica de dos niveles con enrutamiento AODV, ¿qué degrada más el
+desempeño de la red —la movilidad a nivel de clúster o la movilidad a nivel de nodo— y
+cómo cambia ese efecto al aumentar la velocidad?}
+\end{quote}
+
+\subsection{Hipótesis}
+\label{sec:hip}
+
+\textbf{Hipótesis principal.} A una misma velocidad, la movilidad de clúster degrada más
+el desempeño que la movilidad de nodo: produce una menor tasa de entrega de paquetes y un
+mayor retardo. La razón esperada es que el movimiento de un clúster rompe los enlaces
+entre cluster heads, por los que pasa todo el tráfico entre clústeres, mientras que el
+movimiento de los nodos solo altera rutas cortas dentro de cada clúster.
+
+Sea $\mu_{k}^{\mathrm{PDR}}(v)$ la PDR media del escenario $k$ a la velocidad $v$, y
+$\mu_{k}^{D}(v)$ su retardo medio. Para cada velocidad $v$ se plantean:
+
+\begin{align*}
+H_0^{\mathrm{PDR}}&: \mu_{E2}^{\mathrm{PDR}}(v) = \mu_{E1}^{\mathrm{PDR}}(v) &
+H_1^{\mathrm{PDR}}&: \mu_{E2}^{\mathrm{PDR}}(v) < \mu_{E1}^{\mathrm{PDR}}(v) \\
+H_0^{D}&: \mu_{E2}^{D}(v) = \mu_{E1}^{D}(v) &
+H_1^{D}&: \mu_{E2}^{D}(v) > \mu_{E1}^{D}(v)
+\end{align*}
+
+donde E1 es el escenario con solo movilidad de nodo y E2 el escenario con solo
+movilidad de clúster (tabla~\ref{tab:escenarios}).
+
+\textbf{Hipótesis secundarias.}
+\begin{itemize}
+    \item \textbf{HS1:} en los escenarios con movimiento (E1, E2 y E3), el desempeño
+    empeora a medida que aumenta la velocidad.
+    \item \textbf{HS2:} el escenario combinado E3 tiene un desempeño igual o peor que el
+    peor de E1 y E2.
+    \item \textbf{HS3:} la diferencia entre E1 y E2 crece con la velocidad.
+\end{itemize}
+
+\subsection{Variables}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{2.6cm}p{9.4cm}}
+\toprule
+\textbf{Tipo} & \textbf{Variables} \\
+\midrule
+Independientes & Tipo de movilidad (ninguna, nodo, clúster, ambas) y velocidad
+$v \in \{1, 5, 10, 20\}$\,m/s. \\
+Dependientes & PDR, retardo extremo a extremo medio, throughput y jitter medio. \\
+Controladas & Número y agrupación de nodos, geometría, estándar WiFi, tasa de
+transmisión, potencia, modelo de propagación, protocolo de enrutamiento, tráfico y
+tiempo de simulación (tabla~\ref{tab:parametros}). \\
+\bottomrule
+\end{tabular}
+\caption{Variables del experimento.}
+\label{tab:variables}
+\end{table}
+
+{\sloppy
+Las métricas se calculan a partir de los contadores que entrega FlowMonitor
+(\texttt{txPackets}, \texttt{rxPackets}, \texttt{rxBytes}, \texttt{delaySum},
+\texttt{jitterSum}, \texttt{timeFirstTxPacket}, \texttt{timeLastRxPacket}), sumando sobre
+todos los flujos $f$ de una corrida:\par}
+
+\begin{align*}
+\mathrm{PDR} &= \frac{\sum_f \mathrm{rxPackets}_f}{\sum_f \mathrm{txPackets}_f},
+\qquad
+\bar{D} = \frac{\sum_f \mathrm{delaySum}_f}{\sum_f \mathrm{rxPackets}_f}, \\[4pt]
+\mathrm{Throughput} &= \frac{8\sum_f \mathrm{rxBytes}_f}{t_{\mathrm{fin}} - t_{\mathrm{inicio}}},
+\qquad
+\bar{J} = \frac{\sum_f \mathrm{jitterSum}_f}{\sum_f (\mathrm{rxPackets}_f - 1)},
+\end{align*}
+
+donde $t_{\mathrm{inicio}}$ y $t_{\mathrm{fin}}$ son el inicio y el fin del periodo de
+tráfico.
+
+\subsection{Diseño experimental}
+\label{sec:diseno-exp}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccp{6.2cm}}
+\toprule
+\textbf{Escenario} & \textbf{Clúster} & \textbf{Nodo} & \textbf{Propósito} \\
+\midrule
+E0 & No & No & Control (línea base sin movilidad). \\
+E1 & No & Sí & Efecto aislado de la movilidad de nodo. \\
+E2 & Sí & No & Efecto aislado de la movilidad de clúster. \\
+E3 & Sí & Sí & Efecto combinado de ambos niveles. \\
+\bottomrule
+\end{tabular}
+\caption{Escenarios de movilidad.}
+\label{tab:escenarios}
+\end{table}
+
+Los escenarios E1, E2 y E3 se evalúan a las cuatro velocidades, y E0 se evalúa una sola
+vez porque no tiene movimiento. Cada configuración se repite $n = 10$ veces con semillas
+distintas (parámetro \texttt{RngRun} de ns-3), lo que da
+$(3 \times 4 + 1) \times 10 = 130$ corridas.
+
+Para que E1 y E2 sean comparables, en ambos se mueve \textbf{una sola capa} a la misma
+velocidad $v$: los nodos en E1 y los clústeres en E2. Los superclústeres permanecen fijos
+en todos los escenarios; su función es organizar la jerarquía y delimitar la región en la
+que se mueven sus clústeres.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{4.2cm}p{7.8cm}}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} \\
+\midrule
+Simulador & ns-3.43 sobre Ubuntu 22.04 (nativo o WSL2) \\
+Nodos & 20: 4 clústeres de 5 nodos (1 CH fijo + 4 miembros) \\
+Jerarquía & Nivel 1: clústeres A, B, C, D; nivel 2: X = \{A, B\}, Y = \{C, D\} \\
+Canales & Un canal WiFi por clúster y un canal backbone compartido por los 4 CH \\
+Estándar WiFi & IEEE 802.11b, modo ad hoc, tasa fija DSSS 1\,Mbps
+(\texttt{ConstantRateWifiManager}) \\
+Propagación & Valores por defecto de \texttt{YansWifiChannelHelper}: pérdida
+log-distancia y retardo de velocidad constante \\
+Potencia de transmisión & Valor por defecto de ns-3 \\
+Enrutamiento & AODV con parámetros por defecto \\
+Tráfico & 8 flujos UDP \texttt{OnOff} de tasa constante, paquetes de 512\,B a
+4\,paquetes/s (16\,kbit/s por flujo) \\
+Pares de tráfico & Dentro de cada superclúster: A$\rightarrow$B, B$\rightarrow$A,
+C$\rightarrow$D, D$\rightarrow$C; entre superclústeres: A$\rightarrow$C,
+B$\rightarrow$D, C$\rightarrow$A, D$\rightarrow$B (miembro a miembro) \\
+Tiempos & Simulación de 200\,s; tráfico desde un instante uniforme en $[10, 11]$\,s
+hasta 195\,s \\
+Movilidad de clúster & Random Waypoint relativo al centro de su superclúster, región de
+$\pm 150$\,m, velocidad constante $v$, pausa de 2\,s \\
+Movilidad de nodo & Random Walk 2D relativo al centro de su clúster, región de
+$\pm 40$\,m, velocidad constante $v$ \\
+Posiciones iniciales & Superclústeres en $(350, 300)$ y $(650, 300)$\,m; clústeres en
+$x = 275, 425, 575, 725$\,m sobre $y = 300$\,m \\
+\bottomrule
+\end{tabular}
+\caption{Parámetros constantes de la simulación. Los valores geométricos son valores de
+partida: si en E0 la PDR resulta menor al 95\,\%, se ajustan para garantizar una red
+conectada y el cambio se documenta.}
+\label{tab:parametros}
+\end{table}
+
+\subsection{Método de análisis estadístico}
+\label{sec:analisis-est}
+
+Cada corrida es una realización independiente del proceso estocástico de movilidad. Para
+cada configuración y cada métrica se calcula la media muestral $\bar{x}$, la desviación
+estándar $s$ y el intervalo de confianza del 95\,\%:
+\[
+\bar{x} \pm t_{0.975,\,n-1}\,\frac{s}{\sqrt{n}},
+\qquad t_{0.975,\,9} \approx 2.262 .
+\]
+
+La hipótesis principal se contrasta, para cada velocidad, con una prueba $t$ de Welch
+unilateral entre E2 y E1 con nivel de significancia $\alpha = 0.05$. Se define de
+antemano la siguiente \textbf{regla de decisión}: la hipótesis principal se considera
+respaldada si se rechaza $H_0^{\mathrm{PDR}}$ en al menos tres de las cuatro
+velocidades; si se rechaza en menos, no se acepta. El mismo criterio se aplica al
+retardo. Las hipótesis secundarias se evalúan comparando las medias y sus intervalos de
+confianza en las gráficas de desempeño contra velocidad.
