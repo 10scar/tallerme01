@@ -1,0 +1,259 @@
+% =====================================================================
+% Sección: Marco teórico
+% Responsable: Parte 6 — John Jairo Páez Albino
+% =====================================================================
+\section{Marco teórico}
+\label{sec:marco}
+
+Esta sección reúne los conceptos en los que se apoya el resto del trabajo: qué es una
+red móvil \emph{ad hoc}, cómo se organiza en clústeres, cómo se modela el movimiento de
+los clústeres y de los nodos, cómo encuentra rutas AODV, con qué métricas se mide el
+desempeño, cómo se simula todo esto en ns-3 y cómo se analizan los resultados.
+
+\subsection{Redes móviles \emph{ad hoc} (MANET)}
+\label{sec:marco-manet}
+
+Una red inalámbrica \emph{ad hoc} se forma sin infraestructura fija: no hay puntos de
+acceso ni estaciones base, y cada nodo funciona a la vez como terminal y como enrutador,
+reenviando los paquetes de otros nodos. Cuando el origen y el destino no están uno
+dentro del alcance de radio del otro, el mensaje viaja en varios saltos, de vecino en
+vecino. Una MANET (\emph{Mobile Ad hoc Network}) es una red \emph{ad hoc} cuyos nodos se
+mueven, de modo que la topología cambia constantemente: los enlaces aparecen y
+desaparecen según la distancia entre los nodos \cite{sarkar2013adhoc}.
+
+Estas redes se despliegan cuando hace falta un servicio y desaparecen cuando este
+termina, por lo que se usan en operaciones de rescate, redes militares tácticas, redes
+vehiculares y lugares donde la infraestructura no existe o dejó de funcionar. Sus
+desafíos principales son tres: el ancho de banda del canal inalámbrico, que comparten
+todos los nodos vecinos; la energía de los dispositivos, y la inestabilidad de las rutas
+causada por la movilidad \cite{sarkar2013adhoc}. Este trabajo se centra en el último.
+
+\subsection{Arquitecturas jerárquicas y \emph{clustering}}
+\label{sec:marco-jerarquia}
+
+En una red plana todos los nodos están al mismo nivel y participan por igual en el
+enrutamiento. Es sencilla, pero, a medida que crece el número de nodos, aumenta el
+tráfico de control, las rutas se alargan y se vuelven inestables, y la red deja de ser
+escalable. El \emph{clustering} divide la red en subconjuntos de nodos, los clústeres,
+para hacerla más escalable \cite{barbeau2007principles}. Cada clúster elige una cabeza
+de clúster (\emph{cluster head}, CH) que conoce a sus miembros y sabe cómo alcanzarlos.
+Los miembros envían su tráfico a su CH, los CH reenvían paquetes en nombre de sus
+miembros y, entre ellos, ejecutan el protocolo de enrutamiento de la red
+\cite{barbeau2007principles}. Los nodos que conectan clústeres vecinos se llaman
+pasarelas (\emph{gateways}) \cite{sarkar2013adhoc}. Como los CH pueden agruparse a su vez
+en clústeres de un nivel superior, se obtiene una jerarquía de varios niveles; en este
+trabajo los CH se comunican por un canal propio, el \emph{backbone}, y los clústeres se
+agrupan en dos superclústeres (sección~\ref{sec:pregunta}).
+
+Los clústeres pueden ser físicos o lógicos. Un clúster físico es un grupo que se
+desplaza en bloque porque comparte un medio, como los pasajeros de un bus o un convoy de
+vehículos. Un clúster lógico agrupa nodos por un interés común, como los integrantes de
+un grupo de trabajo. En ambos casos hay dos movimientos distintos: el del clúster como
+un todo y el de cada nodo dentro de él, y el modelo de movilidad debe representarlos por
+separado.
+
+\subsection{Antecedente: escalabilidad de redes \emph{ad hoc} jerárquicas}
+\label{sec:marco-ospina}
+
+Ospina y Ortiz \cite{ospina2017growth} estudiaron qué condiciones permiten que una red
+\emph{ad hoc} jerárquica escale según los recursos disponibles en cada capa. Modelaron
+la disponibilidad de recursos con una distribución geométrica truncada, definieron un
+factor de crecimiento $j$ que relaciona los recursos de dos capas sucesivas y lo
+estimaron con simulaciones en ns-3 de arquitecturas de dos y tres capas. Encontraron que
+el crecimiento de los recursos entre capas sigue un modelo lineal y que el valor
+estimado de $j$ está relacionado con la razón áurea. Su trabajo es un ejemplo de la
+misma forma de indagación que sigue este taller: una pregunta sobre una red jerárquica,
+un modelo estocástico y la simulación en ns-3 como experimento.
+
+\subsection{Modelos de movilidad}
+\label{sec:marco-movilidad}
+
+Un modelo de movilidad describe cómo cambian en el tiempo la posición, la velocidad y
+la dirección de los nodos. Los resultados de una simulación de MANET dependen mucho del
+modelo elegido, así que este debe parecerse al comportamiento que se quiere estudiar
+\cite{camp2002survey}. Los modelos se dividen en modelos de entidad, en los que cada
+nodo se mueve de forma independiente, y modelos de grupo, en los que el movimiento de
+un nodo depende del de su grupo \cite{camp2002survey}.
+
+\paragraph{\emph{Random Walk} (caminata aleatoria).} Cada nodo escoge una dirección
+uniforme en $[0, 2\pi)$ y una velocidad uniforme en $[v_{\min}, v_{\max}]$, se mueve así
+durante un tiempo o una distancia fijos y vuelve a escoger; al llegar al borde del área,
+rebota. El modelo no tiene memoria: el siguiente movimiento no depende del anterior, lo
+que produce cambios bruscos de dirección \cite{camp2002survey}.
+
+\paragraph{\emph{Random Waypoint} (punto de paso aleatorio).} Cada nodo escoge un
+destino uniforme dentro del área y una velocidad uniforme en $[v_{\min}, v_{\max}]$,
+viaja en línea recta hasta el destino, se detiene durante un tiempo de pausa y repite
+el proceso. Es el modelo más usado para evaluar protocolos de MANET desde el trabajo de
+Broch et al. \cite{broch1998performance}. Tiene dos defectos conocidos. El primero es
+que los nodos tienden a concentrarse en el centro del área \cite{camp2002survey}. El
+segundo es que, si $v_{\min} = 0$, la velocidad promedio decae con el tiempo, porque los
+nodos que escogen velocidades muy bajas pasan mucho tiempo en tránsito; por eso Yoon et
+al. \cite{yoon2003harmful} recomiendan una velocidad mínima positiva. Además, en lugar
+de descartar el periodo inicial de la simulación, se puede arrancar desde la
+distribución estacionaria del modelo \cite{navidi2004stationary}, que ns-3 ofrece como
+\texttt{SteadyStateRandomWaypointMobilityModel} \cite{ns3mobility}. Las pausas también
+importan: mientras un nodo está detenido no se mueve, así que la velocidad media
+efectiva es menor que la velocidad configurada.
+
+\paragraph{Gauss-Markov.} La velocidad y la dirección de cada nodo se actualizan en
+intervalos fijos y conservan memoria del valor anterior. Para la velocidad,
+\[
+s_n = \alpha\, s_{n-1} + (1 - \alpha)\, \bar{s} + \sqrt{1 - \alpha^2}\; x_{n-1},
+\]
+donde $\bar{s}$ es la velocidad media, $x_{n-1}$ es una variable aleatoria normal y
+$\alpha \in [0, 1]$ controla la aleatoriedad: con $\alpha = 0$ el movimiento es
+completamente aleatorio y con $\alpha = 1$ es lineal. La dirección se actualiza con una
+ecuación análoga \cite{camp2002survey,liang1999predictive}. El modelo evita las paradas
+y los giros bruscos de los dos anteriores.
+
+\paragraph{Movilidad de grupo por punto de referencia (RPGM).} El modelo
+\emph{Reference Point Group Mobility}, propuesto por Hong et al. \cite{hong1999group},
+asigna a cada grupo un centro lógico, o punto de referencia, que se mueve según un
+modelo de entidad, por ejemplo \emph{Random Waypoint}. La posición de cada nodo es la
+del punto de referencia más un desplazamiento aleatorio dentro de un radio. Así el grupo
+se desplaza en bloque y, al mismo tiempo, cada nodo se mueve alrededor de su lugar en el
+grupo.
+
+\paragraph{Movilidad jerárquica.} La idea de RPGM se puede aplicar en varios niveles.
+Si $p_S(t)$ es la posición del centro de un superclúster, $p_C(t)$ la posición del
+centro de un clúster relativa a su superclúster y $p_N(t)$ la posición de un nodo
+relativa a su clúster, la posición absoluta del nodo es
+\[
+p(t) = p_S(t) + p_C(t) + p_N(t).
+\]
+Cada término puede seguir su propio modelo y su propia velocidad. Por eso este enfoque
+representa a la vez el movimiento del clúster y el del nodo, y permite activarlos por
+separado, que es justamente lo que comparan los escenarios E1 y E2. ns-3 implementa esta
+composición con \texttt{HierarchicalMobilityModel}, en la que la posición final es la
+suma vectorial de la posición del modelo padre y la del modelo hijo, y ofrece
+\texttt{GroupMobilityHelper} para configurar grupos completos según RPGM
+\cite{ns3mobility}.
+
+\subsection{Enrutamiento: el protocolo AODV}
+\label{sec:marco-aodv}
+
+Como la topología cambia, los protocolos de enrutamiento de las redes cableadas no son
+adecuados y se usan protocolos diseñados para redes \emph{ad hoc}. Los proactivos
+mantienen en todo momento rutas hacia todos los destinos mediante mensajes de control
+periódicos, como OLSR \cite{clausen2003olsr}; los reactivos buscan una ruta solo cuando
+hay datos que enviar, y los híbridos combinan ambos enfoques
+\cite{barbeau2007principles}. Los proactivos tienen las rutas listas de inmediato, pero
+gastan ancho de banda aunque no haya tráfico; los reactivos ahorran ese tráfico de
+control, pero agregan una demora mientras descubren la ruta.
+
+AODV (\emph{Ad hoc On-Demand Distance Vector}) es un protocolo reactivo
+\cite{rfc3561aodv}. Cuando un nodo necesita una ruta, difunde una solicitud de ruta
+(RREQ) que los vecinos retransmiten. El destino, o un nodo que conoce una ruta
+suficientemente reciente hacia él, contesta con una respuesta de ruta (RREP) que regresa
+por el camino inverso y deja instalada la ruta en cada salto. Si un enlace activo se
+rompe, el nodo que lo detecta envía un mensaje de error (RERR) a los nodos que usaban esa
+ruta, y el origen debe descubrir una nueva. Los números de secuencia de destino evitan
+los ciclos y distinguen las rutas recientes de las viejas \cite{rfc3561aodv}. Por eso la
+movilidad afecta directamente a AODV: cada enlace roto se traduce en paquetes perdidos o
+retrasados mientras se encuentra una ruta nueva, y un enlace roto en el \emph{backbone}
+afecta a todos los flujos que lo atraviesan.
+
+\subsection{Métricas de desempeño}
+\label{sec:marco-metricas}
+
+El desempeño de la red se mide con cuatro métricas por flujo, agregadas sobre todos los
+flujos de datos de una corrida (las fórmulas exactas están en la
+sección~\ref{sec:pregunta}):
+
+\begin{itemize}
+    \item \textbf{Tasa de entrega de paquetes (PDR, \emph{Packet Delivery Ratio}).} Es la
+    proporción de paquetes de datos que llegan a su destino respecto del total enviado
+    por las aplicaciones \cite{broch1998performance}. Mide la confiabilidad de la red.
+    \item \textbf{Retardo extremo a extremo.} Es el tiempo promedio entre el envío y la
+    recepción de los paquetes que sí llegan. Incluye la espera en las colas, las
+    retransmisiones de la capa MAC y el tiempo de descubrimiento de rutas.
+    \item \textbf{\emph{Throughput}.} Es la cantidad de bits recibidos por unidad de
+    tiempo durante el periodo de tráfico. Con una carga fija, baja cuando se pierden
+    paquetes.
+    \item \textbf{\emph{Jitter}.} Es la variación del retardo entre paquetes consecutivos
+    de un mismo flujo. Un \emph{jitter} alto indica que las rutas cambian o que las colas
+    crecen y se vacían de forma irregular.
+\end{itemize}
+
+En ns-3 las cuatro se calculan con el módulo \texttt{flow-monitor}, que registra para
+cada flujo, entre otros contadores, los paquetes y bytes transmitidos y recibidos
+(\texttt{txPackets}, \texttt{rxPackets}, \texttt{rxBytes}), la suma de los retardos
+extremo a extremo de los paquetes recibidos (\texttt{delaySum}) y la suma de las
+variaciones del retardo (\texttt{jitterSum}) \cite{ns3flowmonitor}.
+
+\subsection{Simulación de eventos discretos y ns-3}
+\label{sec:marco-ns3}
+
+Una simulación de eventos discretos representa un sistema cuyo estado cambia solo en
+instantes puntuales, los eventos, como el envío o la llegada de un paquete. El simulador
+mantiene una lista de eventos ordenada por tiempo, toma el siguiente, actualiza el
+estado y programa los eventos que este genera, sin recorrer los instantes intermedios
+\cite{banks2010discrete}. Un estudio de simulación sigue estas etapas: formulación del
+problema y definición de objetivos, construcción del modelo conceptual, recolección de
+datos, programación, verificación y validación del modelo, diseño de experimentos,
+corridas, análisis de resultados y documentación \cite{banks2010discrete}.
+
+ns-3 es un simulador de redes basado en eventos discretos, libre y de código abierto,
+escrito en C++ y orientado a la investigación y la docencia \cite{zarate2021wireless}.
+Un programa de ns-3 crea nodos (\texttt{Node}), les instala dispositivos de red
+(\texttt{NetDevice}) conectados a un canal (\texttt{Channel}), la pila de protocolos de
+Internet con el protocolo de enrutamiento escogido, un modelo de movilidad y
+aplicaciones que generan tráfico; las clases auxiliares (\emph{helpers}) simplifican
+cada uno de estos pasos \cite{zarate2021wireless}. Los módulos que usa este trabajo son
+\cite{ns3doc}:
+
+{\sloppy
+\begin{itemize}
+    \item \texttt{wifi}: capas física y MAC de IEEE 802.11, con dispositivos en modo
+    \emph{ad hoc} y canales independientes (\texttt{YansWifiChannel}).
+    \item \texttt{aodv}: el protocolo AODV descrito en la sección~\ref{sec:marco-aodv}.
+    \item \texttt{mobility}: los modelos de movilidad, entre ellos
+    \texttt{RandomWaypointMobilityModel}, \texttt{RandomWalk2dMobilityModel} y
+    \texttt{HierarchicalMobilityModel}.
+    \item \texttt{internet} y \texttt{applications}: la pila TCP/IP y las aplicaciones
+    de tráfico, como \texttt{OnOffApplication}.
+    \item \texttt{flow-monitor}: las métricas por flujo de la
+    sección~\ref{sec:marco-metricas}.
+\end{itemize}\par}
+
+El alcance de cada canal se fija con un modelo de disco
+(\texttt{RangePropagationLossModel}): dos nodos tienen enlace si y solo si su distancia
+no supera el alcance. Es la misma idealización que el grafo de disco unitario con que se
+analizan teóricamente las redes \emph{ad hoc} \cite{barbeau2007principles}.
+
+Las variables aleatorias de ns-3 provienen del generador MRG32k3a de L'Ecuyer
+\cite{lecuyer1999good}, en una implementación que ofrece una gran cantidad de flujos y
+subflujos independientes \cite{lecuyer2002object}. La semilla y el número de corrida
+(\texttt{RngRun}) se fijan con la clase \texttt{RngSeedManager}; para obtener réplicas
+independientes de un mismo experimento, el manual de ns-3 recomienda conservar la
+semilla y cambiar el número de corrida, que selecciona otro subflujo del generador
+\cite{ns3random}.
+
+\subsection{Análisis estadístico de los resultados}
+\label{sec:marco-estadistica}
+
+El resultado de una corrida es una variable aleatoria, así que una sola corrida no basta
+para responder la pregunta. Se hacen $n$ réplicas independientes de cada configuración y
+se estima la media de cada métrica con un intervalo de confianza
+\cite{banks2010discrete}:
+\[
+\bar{x} \pm t_{1-\alpha/2,\, n-1}\, \frac{s}{\sqrt{n}},
+\]
+donde $\bar{x}$ es la media muestral, $s$ la desviación estándar muestral y
+$t_{1-\alpha/2,\, n-1}$ el cuantil de la distribución $t$ de Student con $n - 1$ grados
+de libertad.
+
+Para comparar dos escenarios, como E1 y E2, se usa la prueba $t$ de Welch
+\cite{welch1947generalization}, que no supone que las dos poblaciones tengan la misma
+varianza. Su estadístico y sus grados de libertad aproximados son
+\[
+t = \frac{\bar{x}_2 - \bar{x}_1}{\sqrt{\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}}},
+\qquad
+\nu \approx
+\frac{\left(\dfrac{s_1^2}{n_1} + \dfrac{s_2^2}{n_2}\right)^2}
+{\dfrac{(s_1^2/n_1)^2}{n_1 - 1} + \dfrac{(s_2^2/n_2)^2}{n_2 - 1}}.
+\]
+La prueba unilateral rechaza la hipótesis nula cuando el valor $p$ es menor que el nivel
+de significancia $\alpha$; en este trabajo, $\alpha = 0.05$
+(sección~\ref{sec:analisis-est}).

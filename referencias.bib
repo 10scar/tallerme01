@@ -4,6 +4,8 @@
 % Las entradas iniciales las agregó la Parte 1 porque las cita en
 % secciones/01-problema.tex y secciones/02-pregunta-hipotesis.tex.
 % Se pueden completar o corregir, pero NO cambien las claves.
+% La Parte 6 completó DOI y nombres, y agregó al final las entradas del
+% marco teórico (secciones/03-marco-teorico.tex).
 % =====================================================================
 
 @article{ospina2017growth,
@@ -18,10 +20,11 @@
 }
 
 @book{zarate2021wireless,
-  author    = {Zárate Ceballos, Henry and Parra Amaris, Jorge and Jiménez Jiménez, Hernán and Romero Rincón, Diego and Agudelo Rojas, Oscar and Ortiz-Triviño, Jorge Eduardo},
+  author    = {Zárate Ceballos, Henry and Parra Amaris, Jorge Ernesto and Jiménez Jiménez, Hernán and Romero Rincón, Diego Alexis and Agudelo Rojas, Oscar and Ortiz Triviño, Jorge Eduardo},
   title     = {Wireless Network Simulation: A Guide using Ad Hoc Networks and the ns-3 Simulator},
   publisher = {Apress},
-  year      = {2021}
+  year      = {2021},
+  doi       = {10.1007/978-1-4842-6849-0}
 }
 
 @book{sarkar2013adhoc,
@@ -36,7 +39,8 @@
   author       = {Perkins, Charles E. and Belding-Royer, Elizabeth M. and Das, Samir R.},
   title        = {Ad hoc On-Demand Distance Vector ({AODV}) Routing},
   howpublished = {RFC 3561, Internet Engineering Task Force},
-  year         = {2003}
+  year         = {2003},
+  doi          = {10.17487/RFC3561}
 }
 
 @article{camp2002survey,
@@ -46,7 +50,8 @@
   volume  = {2},
   number  = {5},
   pages   = {483--502},
-  year    = {2002}
+  year    = {2002},
+  doi     = {10.1002/wcm.72}
 }
 
 @inproceedings{hong1999group,
@@ -54,7 +59,8 @@
   title     = {A group mobility model for ad hoc wireless networks},
   booktitle = {Proceedings of the 2nd ACM International Workshop on Modeling, Analysis and Simulation of Wireless and Mobile Systems (MSWiM)},
   pages     = {53--60},
-  year      = {1999}
+  year      = {1999},
+  doi       = {10.1145/313237.313248}
 }
 
 @book{bunge1995ciencia,
@@ -68,4 +74,126 @@
   title        = {ns-3 Network Simulator: Documentation},
   howpublished = {\url{https://www.nsnam.org/documentation/}},
   year         = {2024}
+}
+
+% ---------------------------------------------------------------------
+% Entradas agregadas por la Parte 6 (marco teórico)
+% ---------------------------------------------------------------------
+
+@book{barbeau2007principles,
+  author    = {Barbeau, Michel and Kranakis, Evangelos},
+  title     = {Principles of Ad Hoc Networking},
+  publisher = {John Wiley \& Sons},
+  year      = {2007},
+  note      = {Archivo del curso: MANETS/Redes Ad Hoc (1).pdf}
+}
+
+@inproceedings{broch1998performance,
+  author    = {Broch, Josh and Maltz, David A. and Johnson, David B. and Hu, Yih-Chun and Jetcheva, Jorjeta},
+  title     = {A performance comparison of multi-hop wireless ad hoc network routing protocols},
+  booktitle = {Proceedings of the 4th Annual ACM/IEEE International Conference on Mobile Computing and Networking (MobiCom)},
+  pages     = {85--97},
+  year      = {1998},
+  doi       = {10.1145/288235.288256}
+}
+
+@inproceedings{yoon2003harmful,
+  author    = {Yoon, Jungkeun and Liu, Mingyan and Noble, Brian},
+  title     = {Random waypoint considered harmful},
+  booktitle = {Proceedings of IEEE INFOCOM 2003},
+  volume    = {2},
+  pages     = {1312--1321},
+  year      = {2003},
+  doi       = {10.1109/INFCOM.2003.1208967}
+}
+
+@article{navidi2004stationary,
+  author  = {Navidi, William and Camp, Tracy},
+  title   = {Stationary distributions for the random waypoint mobility model},
+  journal = {IEEE Transactions on Mobile Computing},
+  volume  = {3},
+  number  = {1},
+  pages   = {99--108},
+  year    = {2004},
+  doi     = {10.1109/TMC.2004.1261820}
+}
+
+@inproceedings{liang1999predictive,
+  author    = {Liang, Ben and Haas, Zygmunt J.},
+  title     = {Predictive distance-based mobility management for {PCS} networks},
+  booktitle = {Proceedings of IEEE INFOCOM '99},
+  volume    = {3},
+  pages     = {1377--1384},
+  year      = {1999},
+  doi       = {10.1109/INFCOM.1999.752157}
+}
+
+@misc{clausen2003olsr,
+  author       = {Clausen, Thomas and Jacquet, Philippe},
+  title        = {Optimized Link State Routing Protocol ({OLSR})},
+  howpublished = {RFC 3626, Internet Engineering Task Force},
+  year         = {2003},
+  doi          = {10.17487/RFC3626}
+}
+
+@book{banks2010discrete,
+  author    = {Banks, Jerry and Carson, John S. and Nelson, Barry L. and Nicol, David M.},
+  title     = {Discrete-Event System Simulation},
+  edition   = {5},
+  publisher = {Pearson},
+  year      = {2010}
+}
+
+@article{lecuyer1999good,
+  author  = {L'Ecuyer, Pierre},
+  title   = {Good parameters and implementations for combined multiple recursive random number generators},
+  journal = {Operations Research},
+  volume  = {47},
+  number  = {1},
+  pages   = {159--164},
+  year    = {1999},
+  doi     = {10.1287/opre.47.1.159}
+}
+
+@article{lecuyer2002object,
+  author  = {L'Ecuyer, Pierre and Simard, Richard and Chen, E. Jack and Kelton, W. David},
+  title   = {An object-oriented random-number package with many long streams and substreams},
+  journal = {Operations Research},
+  volume  = {50},
+  number  = {6},
+  pages   = {1073--1075},
+  year    = {2002},
+  doi     = {10.1287/opre.50.6.1073.358}
+}
+
+@article{welch1947generalization,
+  author  = {Welch, B. L.},
+  title   = {The generalization of ``{Student's}'' problem when several different population variances are involved},
+  journal = {Biometrika},
+  volume  = {34},
+  number  = {1--2},
+  pages   = {28--35},
+  year    = {1947},
+  doi     = {10.1093/biomet/34.1-2.28}
+}
+
+@misc{ns3mobility,
+  author       = {{The ns-3 Project}},
+  title        = {Mobility},
+  howpublished = {ns-3 Model Library, \url{https://www.nsnam.org/docs/models/html/mobility.html}},
+  note         = {Consultado el 4 de noviembre de 2026}
+}
+
+@misc{ns3flowmonitor,
+  author       = {{The ns-3 Project}},
+  title        = {Flow Monitor},
+  howpublished = {ns-3 Model Library, \url{https://www.nsnam.org/docs/models/html/flow-monitor.html}},
+  note         = {Consultado el 4 de noviembre de 2026}
+}
+
+@misc{ns3random,
+  author       = {{The ns-3 Project}},
+  title        = {Random Variables},
+  howpublished = {ns-3 Manual, \url{https://www.nsnam.org/docs/manual/html/random-variables.html}},
+  note         = {Consultado el 4 de noviembre de 2026}
 }
