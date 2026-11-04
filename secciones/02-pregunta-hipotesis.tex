@@ -146,6 +146,18 @@ velocidad $v$: los nodos en E1 y los clústeres en E2. Los superclústeres perma
 en todos los escenarios; su función es organizar la jerarquía y delimitar la región en la
 que se mueven sus clústeres.
 
+El alcance de cada canal se fija explícitamente con un modelo de disco
+(\texttt{RangePropagationLossModel}): todo receptor dentro del alcance recibe la señal y
+ninguno fuera de él. Con el modelo por defecto de ns-3 (pérdida log-distancia), la
+potencia de transmisión por defecto y el umbral de detección de preámbulo de ns-3.43
+($-82$\,dBm), un enlace 802.11b a 1\,Mbps solo alcanza unos 50\,m (medido: 10 de 10
+paquetes a 50\,m y ninguno a 55\,m), lo que impediría tener un backbone entre clústeres
+separados 150\,m. El modelo de disco, además, hace que la geometría del experimento sea
+fácil de controlar y de explicar. Un alcance de 60\,m dentro del clúster (comparable
+a la región de $\pm 40$\,m en que se mueven los nodos) y de 250\,m entre CH (comparable a
+la separación de 150\,m entre clústeres y a su región de $\pm 150$\,m) hace que ambos
+tipos de movilidad puedan romper enlaces, que es justamente lo que se quiere medir.
+
 \begin{table}[h]
 \centering
 \small
@@ -159,8 +171,9 @@ Jerarquía & Nivel 1: clústeres A, B, C, D; nivel 2: X = \{A, B\}, Y = \{C, D\}
 Canales & Un canal WiFi por clúster y un canal backbone compartido por los 4 CH \\
 Estándar WiFi & IEEE 802.11b, modo ad hoc, tasa fija DSSS 1\,Mbps
 (\texttt{ConstantRateWifiManager}) \\
-Propagación & Valores por defecto de \texttt{YansWifiChannelHelper}: pérdida
-log-distancia y retardo de velocidad constante \\
+Propagación & Modelo de disco (\texttt{RangePropagationLossModel}) con retardo de
+velocidad constante \\
+Alcance efectivo & 60\,m dentro de cada clúster y 250\,m en el backbone entre CH \\
 Potencia de transmisión & Valor por defecto de ns-3 \\
 Enrutamiento & AODV con parámetros por defecto \\
 Tráfico & 8 flujos UDP \texttt{OnOff} de tasa constante, paquetes de 512\,B a
@@ -175,7 +188,8 @@ $\pm 150$\,m, velocidad constante $v$, pausa de 2\,s \\
 Movilidad de nodo & Random Walk 2D relativo al centro de su clúster, región de
 $\pm 40$\,m, velocidad constante $v$ \\
 Posiciones iniciales & Superclústeres en $(350, 300)$ y $(650, 300)$\,m; clústeres en
-$x = 275, 425, 575, 725$\,m sobre $y = 300$\,m \\
+$x = 275, 425, 575, 725$\,m sobre $y = 300$\,m; CH en el centro y miembros en un anillo de
+25\,m de radio \\
 \bottomrule
 \end{tabular}
 \caption{Parámetros constantes de la simulación. Los valores geométricos son valores de

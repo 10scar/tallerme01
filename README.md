@@ -96,6 +96,9 @@ Archivo: `simulacion/manet-jerarquica.cc` (se copia a `scratch/` de ns-3).
 | `--RngRun` | int | `1` | Réplica (semilla) |
 | `--outDir` | string | `resultados/raw` | Carpeta de salida |
 | `--netanim` | bool | `false` | Genera traza de NetAnim |
+| `--verificar` | bool | `false` | Prueba de conectividad de la Parte 1 (UDP Echo entre clústeres) |
+| `--rangoCluster` | double | `60` | Alcance efectivo dentro del clúster (m) |
+| `--rangoBackbone` | double | `250` | Alcance efectivo del backbone entre CH (m) |
 
 **Salida:** `resultados/raw/<scenario>_cs<clusterSpeed>_ns<nodeSpeed>_run<RngRun>.xml` (FlowMonitor).
 
@@ -112,13 +115,14 @@ Archivo: `simulacion/manet-jerarquica.cc` (se copia a `scratch/` de ns-3).
 |---|---|
 | Nodos | 20: 4 clústeres × 5 (1 CH fijo + 4 miembros) |
 | WiFi | 802.11b ad hoc, tasa fija DSSS 1 Mbps (`ConstantRateWifiManager`), potencia por defecto |
-| Propagación | Por defecto de `YansWifiChannelHelper` (log-distancia + retardo de velocidad constante) |
+| Propagación | Modelo de disco (`RangePropagationLossModel`) + retardo de velocidad constante. Dentro del alcance se recibe todo; fuera, nada |
+| Alcance efectivo | **60 m** dentro de cada clúster (`--rangoCluster`) y **250 m** en el backbone (`--rangoBackbone`) |
 | Canales | 1 `YansWifiChannel` por clúster + 1 backbone para los 4 CH |
 | Enrutamiento | AODV con parámetros por defecto |
 | Tráfico | 8 flujos UDP `OnOff` CBR, 512 B, 4 paquetes/s (16 kbit/s cada uno) |
 | Pares (miembro → miembro) | A→B, B→A, C→D, D→C (dentro de superclúster); A→C, B→D, C→A, D→B (entre superclústeres) |
 | Tiempos | Simulación 200 s; tráfico desde un instante uniforme en [10, 11] s hasta 195 s |
-| Posiciones iniciales | Superclústeres en (350, 300) y (650, 300) m; clústeres en x = 275, 425, 575, 725 m sobre y = 300 m |
+| Posiciones iniciales | Superclústeres en (350, 300) y (650, 300) m; clústeres en x = 275, 425, 575, 725 m sobre y = 300 m; CH en el centro del clúster y los 4 miembros en un anillo de 25 m de radio |
 
 > Los valores geométricos son **de partida**. Si en E0 la PDR da menos del 95 %, la Parte 2 los ajusta para que la red quede conectada y documenta el cambio aquí.
 
@@ -195,16 +199,44 @@ No depende de nadie; es el punto de partida de toda la cadena.
 
 - [x] Fijar la pregunta de investigación, la hipótesis, las variables, los escenarios, las velocidades, el número de réplicas y los parámetros constantes (sección 2).
 - [x] Fijar la versión de ns-3 del grupo y escribirla en la sección 2.6.
-- [ ] Crear `simulacion/manet-jerarquica.cc` con:
+- [x] Crear `simulacion/manet-jerarquica.cc` con:
   - Todos los parámetros de la sección 2.5 (`CommandLine`).
   - Los 20 nodos agrupados en 4 clústeres y 2 superclústeres (`NodeContainer` por grupo, CH identificados).
   - WiFi ad hoc: un canal por clúster + un canal backbone para los 4 CH (802.11, `AdhocWifiMac`, `ConstantRateWifiManager`).
   - Pila de internet con **AODV** y direccionamiento por subredes (sección 2.2).
   - Una función vacía `ConfigurarMovilidad(...)` donde la Parte 2 conecta la movilidad (mientras tanto, posiciones fijas).
-- [ ] Verificar que compila y corre en la versión acordada.
+- [x] Verificar que compila y corre en la versión acordada (prueba de conectividad: 120/120 paquetes).
 - [x] Redactar **Descripción y justificación del problema** (por qué importa la movilidad en MANETs jerárquicas, conexión con el artículo de Ospina y Ortiz).
 - [x] Redactar **Pregunta de investigación e hipótesis**, explicando el método científico aplicado (observación → pregunta → hipótesis → experimento → análisis → conclusión).
-- [ ] **Entrega a la Parte 2:** el `.cc` con la red funcionando y una nota de cómo está organizado.
+- [x] **Entrega a la Parte 2:** el `.cc` con la red funcionando y una nota de cómo está organizado (abajo).
+
+#### Nota de entrega de la Parte 1 → Parte 2
+
+**Cómo correrlo** (desde `~/ns-allinone-3.43/ns-3.43` en Ubuntu/WSL):
+```bash
+cp "/mnt/c/Users/<tu-usuario>/<ruta-al-repo>/simulacion/manet-jerarquica.cc" scratch/
+./ns3 run "scratch/manet-jerarquica --verificar=true --simTime=30"
+```
+Debe terminar con `Total: 120/120 (100.0 %)` y `RESULTADO: la red jerárquica está conectada.`
+
+> Si ns-3 se configuró sin ejemplos, `./ns3 run hello-simulator` no existe; no es un error de instalación.
+
+**Organización del código:**
+- `struct Parametros`: todos los parámetros (los de línea de comandos y los geométricos).
+- `struct RedJerarquica`: lo que reciben las Partes 2 y 3.
+  - `red.clusters[k]`: nodos del clúster k (A=0 … D=3); el **índice 0 es el CH** y 1–4 son los miembros.
+  - `red.superclusters[s]`: nodos del superclúster s (X=0, Y=1).
+  - `red.clusterHeads`, `red.miembros`, `red.todos`.
+  - `red.ifCluster[k].GetAddress(i)`: IP del nodo i del clúster k; `red.ifBackbone.GetAddress(k)`: IP de backbone del CH k.
+- `CrearNodos()` y `ConfigurarRed()` (Parte 1): **no hay que tocarlas**.
+- `ConfigurarMovilidad()` (**Parte 2**): hoy pone posiciones fijas (CH en el centro del clúster, miembros en un anillo de 25 m). Hay que reemplazarla por la movilidad jerárquica de la sección 2.3, usando `p.clusterSpeed`, `p.nodeSpeed` y `p.superSpeed`.
+- `ConfigurarTrafico()`, `ConfigurarMetricas()`, `GuardarMetricas()` (**Parte 3**): vacías, con la especificación en el comentario.
+- `--verificar=true`: prueba de conectividad (UDP Echo entre el miembro 1 de cada clúster). Sirve para comprobar que la movilidad no rompe la red en E0.
+
+**Cosas a tener en cuenta:**
+- La propagación es un **modelo de disco**: alcance exacto de 60 m dentro del clúster y 250 m en el backbone. Se cambia con `--rangoCluster` y `--rangoBackbone`.
+- Los canales de los clústeres son **independientes**: un miembro solo puede hablar con nodos de su clúster, y lo que sale del clúster pasa por su CH y el backbone. Se comprobó: con `--rangoBackbone=100` (menos que los 150 m entre clústeres) la conectividad cae a 0/120.
+- Con movilidad de nodo, un miembro puede quedar a más de 60 m de su CH. AODV puede rodear ese corte usando otros miembros del mismo clúster como intermediarios.
 
 ### Parte 2 — Movilidad jerárquica
 **Responsable:** José Esteban Alvarado Monroy
