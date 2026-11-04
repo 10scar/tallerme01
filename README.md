@@ -298,15 +298,30 @@ Debe terminar con `Total: 120/120 (100.0 %)` y `RESULTADO: la red jerárquica es
    Se redactó `secciones/05-codigo-fuente.tex` con todo el detalle de software, arquitectura del código, ecuaciones de cálculo, fragmentos clave y la validación en E0. Óscar (Parte 5) solo debe incluirla en `Entregable.tex` con `\input{secciones/05-codigo-fuente.tex}`.
 
 ### Parte 4 — Automatización de experimentos y gráficas
-**Responsable:** José Esteban Alvarado Monroy
-**Archivos:** `scripts/correr_escenarios.sh`, `scripts/parse_flowmon.py`, `scripts/graficar.py`, `resultados/`
+
+**Responsable:** José Esteban Alvarado Monroy  
+**Estado:** Completada  
+**Archivos:** `scripts/correr_escenarios.sh`, `scripts/parse_flowmon.py`, `scripts/graficar.py`, `resultados/`  
 **Recibe de la Parte 3:** el programa final.
 
-- [ ] `correr_escenarios.sh`: recorre escenarios × velocidades × réplicas (sección 2.4) y llama al programa.
-- [ ] `parse_flowmon.py`: lee los XML de FlowMonitor y calcula por corrida PDR, retardo promedio, throughput y jitter → `resultados/resumen.csv`.
-- [ ] `graficar.py`: medias con IC 95 % (t de Student) por escenario y velocidad; gráficas de PDR vs. velocidad y retardo vs. velocidad (una curva por escenario).
-- [ ] Correr todos los experimentos y subir `resumen.csv`, una tabla resumen y las figuras a `resultados/`.
-- [ ] **Entrega a las Partes 5, 6 y 7:** scripts, resultados y figuras en el repo, con una nota de cómo se corren.
+- [x] `correr_escenarios.sh`: automatización de los cuatro escenarios (E0, E1, E2 y E3), cuatro velocidades (1, 5, 10 y 20 m/s) y diez réplicas por configuración.
+- [x] `parse_flowmon.py`: procesamiento de los archivos XML de FlowMonitor y cálculo de PDR, retardo promedio, throughput y jitter. Se filtran exclusivamente los ocho flujos de datos (puertos 5000–5007), excluyendo el tráfico de control AODV (puerto 654).
+- [x] `graficar.py`: generación de tablas estadísticas, medias e intervalos de confianza del 95 %, gráficas comparativas y pruebas t de Welch unilaterales entre E2 y E1.
+- [x] Ejecución de las 130 simulaciones correspondientes a las 13 configuraciones experimentales con diez réplicas cada una.
+- [x] Generación y validación de `resultados/resumen.csv`, `resultados/tabla_estadistica.csv`, `resultados/comparacion_E2_vs_E1.csv`, `resultados/RESULTADOS.md` y cinco gráficas PNG.
+- [x] **Entrega a las Partes 5, 6 y 7:** scripts, resultados y figuras disponibles en la rama `P4`, junto con instrucciones de ejecución.
+
+**Resultados principales:**
+
+- 130 simulaciones completadas y procesadas correctamente.
+- 1.040 flujos de datos analizados, excluyendo 4.097 flujos de control AODV.
+- PDR agregado de 83,57 %.
+- Comparaciones estadísticas E2 vs. E1 calculadas para las cuatro velocidades.
+- Cinco figuras generadas para su incorporación al informe.
+
+**Limitación metodológica:** el modelo Random Waypoint introduce pausas fijas de 2 segundos al alcanzar cada destino. Por ello, la proporción de tiempo en pausa puede aumentar con la velocidad configurada.
+
+**Nota:** las interpretaciones científicas definitivas y las conclusiones corresponden a la Parte 7.
 
 ### Parte 5 — LaTeX, diseño de la solución y manual técnico
 **Responsable:** Óscar Iván Ulises Gutiérrez Palacios
