@@ -16,11 +16,8 @@
 *.snm
 *.xdv
 
-# PDFs finales: los genera GitHub Actions y quedan en Releases.
-# Solo se ignoran los de la raíz; los diagramas en Materiales/diagramas/*.pdf
-# SÍ deben subirse, porque secciones/04-diseno.tex los incluye.
-/Entregable.pdf
-/Manuales.pdf
+# Los PDF finales (Entregable.pdf y Manuales.pdf) SÍ se suben: se compilan
+# localmente con latexmk -lualatex (ya no hay GitHub Actions).
 
 # --- Resultados crudos de ns-3 (130 XML de FlowMonitor; se regeneran con
 # scripts/correr_escenarios.sh). Sí se suben resumen.csv, las tablas y figuras.
@@ -37,3 +34,5 @@ __pycache__/
 *~
 .DS_Store
 Thumbs.db
+
+estilo.txt

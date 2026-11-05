@@ -5,11 +5,11 @@
 \section{Código fuente}
 \label{sec:codigo-fuente}
 
-El programa de simulación está implementado en C++ sobre ns-3 (versión 3.43) en el archivo \texttt{simulacion/manet-jerarquica.cc}. En esta sección se describen el entorno de software utilizado, la organización del código fuente, la generación de tráfico, la captura de métricas con \texttt{FlowMonitor}, la visualización en NetAnim y la validación sobre el escenario base.
+El programa de simulación está implementado en C++ sobre ns-3 (versión 3.43), en el archivo \texttt{simulacion/manet-jerarquica.cc}. Esta sección recorre el entorno de software utilizado, la organización del código fuente, la generación de tráfico, la captura de métricas con \texttt{FlowMonitor}, la visualización en NetAnim y la validación sobre el escenario base. El objetivo es que cualquier lector pueda ubicar en el código cada pieza del diseño descrito en la sección~\ref{sec:diseno}.
 
 \subsection{Entorno de software y versiones}
 
-El desarrollo y las simulaciones se estandarizaron en el entorno descrito en la tabla~\ref{tab:versiones-software}, correspondiente a la configuración acordada por el equipo para asegurar que los scripts y resultados sean directamente reproducibles.
+El desarrollo y las simulaciones se hicieron en el entorno de la tabla~\ref{tab:versiones-software}, acordado por el equipo para que los scripts y los resultados sean directamente reproducibles. Fijar las versiones no es un detalle menor: un cambio de versión de ns-3 puede alterar el comportamiento de los modelos y, con ello, los resultados.
 
 \begin{table}[h]
 \centering
@@ -31,11 +31,11 @@ Visualizador gráfico & NetAnim 3.109 & Opcional para inspección visual de topo
 \end{table}
 
 \paragraph{Sobre la biblioteca \texttt{ns3-ai}:}
-Aunque el enunciado menciona \texttt{ns3-ai} como una alternativa deseable, se optó por no utilizarla. El estudio aborda modelos analíticos de movilidad y el comportamiento del protocolo reactivo AODV, fenómenos que el motor de simulación de eventos discretos de ns-3 resuelve de forma nativa en C++. Incorporar \texttt{ns3-ai} requería capas de sincronización inter-proceso mediante memoria compartida y dependencias de Python que complicaban la instalación y aumentaban el tiempo de cómputo sin aportar al análisis de movilidad. Mantener la simulación en C++ nativo asegura simplicidad en el despliegue y reproducibilidad exacta con el generador de números pseudoaleatorios (\texttt{--RngRun}).
+Aunque el enunciado menciona \texttt{ns3-ai} como una alternativa deseable, se optó por no utilizarla. El estudio aborda modelos analíticos de movilidad y el comportamiento del protocolo reactivo AODV, fenómenos que el motor de simulación de eventos discretos de ns-3 resuelve de forma nativa en C++. Incorporar \texttt{ns3-ai}, en cambio, exigía capas de sincronización entre procesos mediante memoria compartida y dependencias de Python que complicaban la instalación y aumentaban el tiempo de cómputo, sin aportar al análisis de la movilidad. Mantener la simulación en C++ nativo simplifica el despliegue y asegura reproducibilidad exacta con el generador de números pseudoaleatorios (\texttt{--RngRun}). En pocas palabras, la herramienta se eligió por lo que exige el problema y no por lo que ofrece la librería.
 
 \subsection{Estructura de \texttt{manet-jerarquica.cc}}
 
-El script está organizado de manera modular para desacoplar el trabajo de los integrantes y evitar dependencias cruzadas en el código:
+El programa está organizado de forma modular, de modo que el trabajo de cada integrante quedara aislado en sus propias funciones y no hubiera dependencias cruzadas en el código:
 
 \begin{itemize}
     \item \texttt{struct Parametros}: agrupa las opciones configurables desde la línea de comandos mediante la clase \texttt{CommandLine} de ns-3 (escenario, velocidades, tiempos, alcances de radio y ruta de salida).
@@ -49,20 +49,20 @@ El punto de entrada (\texttt{main}) orquesta las etapas en secuencia: procesa pa
 
 \subsection{Generación de tráfico sintético (\texttt{ConfigurarTrafico})}
 
-Para someter a prueba la jerarquía completa de la red, se definen ocho flujos UDP constantes (CBR) mediante aplicaciones \texttt{OnOffApplication}. Los flujos se establecen estrictamente entre nodos miembros de clústeres diferentes, combinando comunicación local al superclúster y comunicación que cruza entre superclústeres:
+Para poner a prueba la jerarquía completa de la red se definen ocho flujos UDP de tasa constante (CBR) mediante aplicaciones \texttt{OnOffApplication}. Todos los flujos van entre nodos miembros de clústeres diferentes y combinan comunicación dentro de un mismo superclúster con comunicación que cruza entre superclústeres:
 
 \begin{itemize}
     \item \textbf{Flujos intra-superclúster (miembros 1):} $A1 \leftrightarrow B1$ dentro del superclúster X, y $C1 \leftrightarrow D1$ dentro del superclúster Y (puertos 5000 a 5003).
     \item \textbf{Flujos inter-superclúster (miembros 2):} $A2 \rightarrow C2$, $B2 \rightarrow D2$, $C2 \rightarrow A2$ y $D2 \rightarrow B2$, cruzando la frontera entre X e Y (puertos 5004 a 5007).
 \end{itemize}
 
-Todos los generadores y receptores residen en nodos miembros. Los Cluster Heads (nodo 0 de cada clúster) no emiten ni reciben tráfico de usuario; actúan exclusivamente como enrutadores intermedios en el backbone. Esto evita que el tráfico propio compita con el tráfico de tránsito en las colas del CH, preservando la fidelidad de la medición.
+Todos los generadores y receptores están en nodos miembros. Los Cluster Heads (nodo 0 de cada clúster) no emiten ni reciben tráfico de usuario: actúan solo como enrutadores intermedios en el backbone. Así se evita que un tráfico propio del CH compita en sus colas con el tráfico de tránsito, que es justamente el que se quiere medir.
 
-Cada flujo emite paquetes de 512 bytes a 4 paquetes por segundo, lo que equivale a una tasa fija de 16\,384 bit/s (16 kbit/s). La aplicación se configura con \texttt{OnTime} constante de 1.0 y \texttt{OffTime} en 0.0, garantizando una emisión continua y periódica. Para evitar que todos los flujos comiencen exactamente en $t = 0$ y saturen el medio con solicitudes de ruta simultáneas, el inicio de cada flujo se desfasa con una variable uniforme en el intervalo $[10.0, 11.0]$ segundos. Esta ventana inicial de 10 segundos permite que los módulos inalámbricos se sincronicen y que AODV descubra rutas de forma ordenada. La transmisión se detiene a los 195 segundos, dando un margen de 5 segundos para que los paquetes en vuelo o en búferes de reintento lleguen a su destino antes del fin de la simulación.
+Cada flujo emite paquetes de 512 bytes a 4 paquetes por segundo, es decir, una tasa fija de 16\,384 bit/s (16 kbit/s). La aplicación se configura con \texttt{OnTime} constante de 1.0 y \texttt{OffTime} en 0.0, lo que produce una emisión continua y periódica. El inicio de cada flujo se desfasa con una variable uniforme en el intervalo $[10.0, 11.0]$ segundos, para que los flujos no comiencen todos a la vez y saturen el medio con solicitudes de ruta simultáneas. Esa ventana inicial de 10 segundos permite, además, que los módulos inalámbricos se sincronicen y que AODV descubra las rutas de forma ordenada. La transmisión se detiene a los 195 segundos, lo que deja un margen de 5 segundos para que los paquetes en vuelo o en búferes de reintento lleguen a su destino antes del fin de la simulación.
 
 \subsection{Recolección y reporte de métricas (\texttt{FlowMonitor})}
 
-En lugar de generar trazas completas de paquetes (PCAP o ASCII), que para 130 ejecuciones producirían un volumen excesivo de datos, se emplea el módulo \texttt{FlowMonitor} de ns-3. Este componente monitorea en memoria cada flujo IPv4 identificado por su tupla de cinco elementos (origen, destino, puertos y protocolo).
+Generar trazas completas de paquetes (PCAP o ASCII) para 130 ejecuciones produciría un volumen de datos excesivo y, en su mayoría, innecesario. Por eso se emplea el módulo \texttt{FlowMonitor} de ns-3, que monitorea en memoria cada flujo IPv4 identificado por su tupla de cinco elementos (origen, destino, puertos y protocolo) y entrega directamente los contadores que necesitan las métricas.
 
 Al concluir la simulación, \texttt{GuardarMetricas()} procesa las estadísticas agregadas de todos los flujos y calcula las métricas del experimento:
 \begin{itemize}
@@ -76,11 +76,11 @@ El reporte completo de FlowMonitor se exporta en formato XML en la ruta acordada
 \begin{center}
 \texttt{<outDir>/<scenario>\_cs<clusterSpeed>\_ns<nodeSpeed>\_run<RngRun>.xml}
 \end{center}
-La función auxiliar \texttt{NombreSalida()} centraliza este formato, y se emplea \texttt{std::filesystem::create\_directories} para asegurar que el directorio de salida exista antes de la escritura. Para facilitar la inspección durante pruebas manuales, el programa imprime adicionalmente un resumen compacto en la terminal con las métricas calculadas.
+La función auxiliar \texttt{NombreSalida()} centraliza este formato, y \texttt{std::filesystem::create\_directories} asegura que el directorio de salida exista antes de la escritura. Para facilitar la inspección durante las pruebas manuales, el programa imprime además un resumen compacto de las métricas en la terminal. Ese resumen suma todos los flujos que registra FlowMonitor, incluidos los mensajes de control de AODV, por lo que puede diferir ligeramente de las métricas del análisis, que usan solo los ocho flujos de datos.
 
 \subsection{Soporte para NetAnim (\texttt{ConfigurarNetAnim})}
 
-Cuando se especifica el argumento \texttt{--netanim=true}, el programa genera un archivo de animación XML en el directorio de salida. Para distinguir visualmente los roles de la topología en NetAnim, los Cluster Heads se configuran en color rojo con un tamaño ampliado (radio 6.0) y etiqueta \texttt{[CH]}, mientras que los nodos miembros se dibujan en color azul y tamaño estándar (radio 3.5). Esta diferenciación permite verificar de forma visual la coherencia espacial de los clústeres y el movimiento relativo durante la depuración.
+Con el argumento \texttt{--netanim=true}, el programa genera un archivo de animación XML en el directorio de salida. Para distinguir los roles de la topología, los Cluster Heads se dibujan en rojo, con un tamaño ampliado (radio 6.0) y la etiqueta \texttt{[CH]}, mientras que los miembros aparecen en azul y con tamaño estándar (radio 3.5). Esta diferenciación permite comprobar a simple vista la coherencia espacial de los clústeres y su movimiento relativo durante la depuración.
 
 \subsection{Fragmentos clave de la implementación}
 
@@ -153,7 +153,7 @@ for (const auto& [id, st] : g_monitor->GetFlowStats()) {
 
 \subsection{Validación de integración del programa}
 
-El funcionamiento conjunto del sistema se valida sobre el escenario de control \textbf{E0} (sin movilidad):
+Antes de automatizar los experimentos, conviene comprobar que el sistema completo funciona en el caso más sencillo. Por eso se valida sobre el escenario de control \textbf{E0}, sin movilidad:
 
 \begin{verbatim}
 ./ns3 run "scratch/manet-jerarquica --scenario=E0 --clusterSpeed=0 \
@@ -162,4 +162,4 @@ El funcionamiento conjunto del sistema se valida sobre el escenario de control \
 
 En la réplica 1 (\texttt{E0\_cs0\_ns0\_run1.xml}), los ocho flujos transmitieron un total de 5\,901 paquetes de datos y se recibieron exactamente 5\,901, alcanzando una tasa de entrega (PDR) del 100.0\,\%, un retardo promedio de 18.82\,ms y un throughput agregado de 137.80\,kbit/s. A través de las diez réplicas de control ejecutadas por el equipo (\texttt{resultados/resumen.csv}), la PDR media se situó en el 99.97\,\% (con un intervalo de confianza al 95\,\% de $[99.93, 100.01]$\,\%) y el retardo promedio en 20.41\,ms.
 
-Estos resultados confirman que la red fija es plenamente estable y que el enrutamiento AODV a través del backbone jerárquico opera sin pérdidas una vez descubiertas las rutas iniciales. De este modo, queda validada la línea base necesaria para garantizar que cualquier degradación observada en los escenarios E1, E2 y E3 sea estrictamente atribuible a la dinámica de movilidad y no a defectos en la pila de red o en la generación de tráfico.
+Estos resultados confirman que la red fija es estable y que el enrutamiento AODV a través del backbone jerárquico opera sin pérdidas una vez descubiertas las rutas iniciales. Queda así validada la línea base: si los escenarios E1, E2 y E3 muestran degradación, esta podrá atribuirse a la movilidad y no a defectos en la pila de red o en la generación de tráfico.

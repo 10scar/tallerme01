@@ -9,26 +9,32 @@
 
 Una red móvil ad hoc (MANET, \emph{Mobile Ad hoc Network}) es un conjunto de nodos
 inalámbricos que se comunican entre sí sin depender de una infraestructura fija, como
-puntos de acceso o estaciones base. Cada nodo actúa a la vez como terminal y como
-enrutador: reenvía paquetes de otros nodos para que la información llegue a destinos
-que están fuera de su alcance directo \cite{sarkar2013adhoc,zarate2021wireless}. Como
-los nodos se mueven, la topología de la red cambia continuamente: los enlaces aparecen
-y desaparecen, y las rutas deben descubrirse y repararse sobre la marcha.
+puntos de acceso o estaciones base. Por ello resulta especialmente útil donde esa
+infraestructura no existe o no alcanza, como en zonas rurales sin cobertura o en eventos
+multitudinarios. En ella cada nodo cumple un doble papel: es terminal y, a la vez,
+enrutador, de modo que reenvía los paquetes de otros nodos para que la información llegue
+a destinos situados fuera de su alcance directo \cite{sarkar2013adhoc,zarate2021wireless}.
+Esta independencia tiene un costo, dado que los nodos se mueven: la topología de la red
+cambia continuamente, los enlaces aparecen y desaparecen, y las rutas deben descubrirse y
+repararse sobre la marcha. Dicho de otro modo, la red no es una estructura estática, sino
+una que se reorganiza mientras transmite.
 
-Cuando el número de nodos crece, una organización plana deja de escalar: en protocolos
-reactivos como AODV \cite{rfc3561aodv}, cada descubrimiento de ruta inunda la red con
-solicitudes, y el tráfico de control termina compitiendo con el tráfico útil. La
+A medida que crece el número de nodos, una organización plana deja de escalar. En
+protocolos reactivos como AODV \cite{rfc3561aodv}, cada descubrimiento de ruta inunda la
+red con solicitudes, y el tráfico de control termina compitiendo con el tráfico útil. La
 alternativa habitual es una \textbf{arquitectura jerárquica}: los nodos se agrupan en
 clústeres, cada clúster tiene un nodo coordinador o \emph{cluster head} (CH), y los CH
-forman a su vez un nivel superior (\emph{backbone}) por el que viaja la comunicación
-entre clústeres. Ospina y Ortiz \cite{ospina2017growth} estudiaron, con simulaciones en
-ns-3, las condiciones bajo las cuales estas arquitecturas jerárquicas de dos y tres
-capas son escalables, y mostraron que la relación de recursos entre capas sucesivas
-puede describirse con un factor de crecimiento.
+forman a su vez un nivel superior (\emph{backbone}) por el que viaja la comunicación entre
+clústeres. Ospina y Ortiz \cite{ospina2017growth} estudiaron, con simulaciones en ns-3,
+las condiciones bajo las cuales estas arquitecturas de dos y tres capas son escalables, y
+mostraron que la relación de recursos entre capas sucesivas puede describirse con un
+factor de crecimiento. La jerarquía, en suma, ordena la red, pero también introduce
+enlaces de los que depende buena parte del tráfico.
 
 \subsection{El problema: dos niveles de movilidad}
 
-En una MANET jerárquica la movilidad ocurre en dos niveles distintos:
+En una MANET jerárquica la movilidad no ocurre de una sola forma, sino en dos niveles
+distintos:
 
 \begin{itemize}
     \item \textbf{Movilidad de clúster:} el grupo completo se desplaza como un todo.
@@ -39,24 +45,28 @@ En una MANET jerárquica la movilidad ocurre en dos niveles distintos:
 \end{itemize}
 
 Los modelos de movilidad clásicos, como Random Waypoint o Random Walk, tratan a cada
-nodo como independiente; los modelos de grupo, como RPGM (\emph{Reference Point Group
-Mobility}), representan precisamente esta combinación de un movimiento colectivo con
+nodo como independiente. Los modelos de grupo, como RPGM (\emph{Reference Point Group
+Mobility}), representan en cambio esta combinación de un movimiento colectivo con
 desviaciones individuales \cite{camp2002survey,hong1999group}.
 
 Ambos tipos de movilidad afectan a la red de forma diferente. La movilidad de nodo
 cambia muchos enlaces, pero todos son \emph{locales}: rutas cortas dentro de un mismo
-clúster, que AODV repara con poco costo. La movilidad de clúster cambia pocos enlaces,
-pero son los enlaces \emph{críticos} entre los CH, por donde pasa todo el tráfico que
-cruza la jerarquía; cuando uno de ellos se rompe, se interrumpen todos los flujos entre
-clústeres que dependían de él. No es evidente cuál de los dos efectos domina, ni cómo
-cambia esa relación al aumentar la velocidad.
+clúster, que AODV repara con poco costo. La movilidad de clúster, por el contrario,
+cambia pocos enlaces, pero son los enlaces \emph{críticos} entre los CH, por donde pasa
+todo el tráfico que cruza la jerarquía; cuando uno de ellos se rompe, se interrumpen todos
+los flujos entre clústeres que dependían de él. Se trata, entonces, de muchos daños
+pequeños frente a pocos daños graves, y no es evidente cuál de los dos efectos domina ni
+cómo cambia esa relación al aumentar la velocidad.
 
-El problema que aborda este trabajo es, entonces, \textbf{cuantificar y comparar, mediante
-simulación en ns-3, el efecto de la movilidad de clúster y el de la movilidad de nodo
-sobre el desempeño de una MANET jerárquica} de dos niveles (cuatro clústeres en el
+El problema que aborda este trabajo es, por tanto, \textbf{cuantificar y comparar,
+mediante simulación en ns-3, el efecto de la movilidad de clúster y el de la movilidad de
+nodo sobre el desempeño de una MANET jerárquica} de dos niveles (cuatro clústeres en el
 primer nivel y dos superclústeres en el segundo), con enrutamiento AODV.
 
 \subsection{Justificación}
+
+La pregunta no es solo de interés académico; responderla tiene consecuencias en al menos
+cuatro frentes:
 
 \begin{itemize}
     \item \textbf{Diseño de redes jerárquicas.} Saber qué tipo de movilidad degrada más
@@ -68,14 +78,14 @@ primer nivel y dos superclústeres en el segundo), con enrutamiento AODV.
     redes militares tácticas, caravanas vehiculares y redes de sensores en animales
     presentan exactamente esta combinación de movimiento colectivo e individual.
     \item \textbf{Pertinencia de la simulación.} Montar un experimento de campo con
-    decenas de equipos móviles es costoso y difícil de repetir. La simulación permite
-    activar y desactivar cada tipo de movilidad por separado —algo imposible de controlar
-    en el mundo real—, mantener constantes las demás variables y repetir cada
+    decenas de equipos móviles es costoso y difícil de repetir. La simulación, en cambio,
+    permite activar y desactivar cada tipo de movilidad por separado —algo imposible de
+    controlar en el mundo real—, mantener constantes las demás variables y repetir cada
     experimento con distintas semillas aleatorias.
     \item \textbf{Relación con el curso.} La movilidad es un proceso estocástico, y cada
     corrida de la simulación es una realización de ese proceso. Por eso las conclusiones
-    se obtienen con réplicas independientes, estimadores e intervalos de confianza, como
-    se describe en la sección~\ref{sec:pregunta}.
+    no se apoyan en una sola corrida, sino en réplicas independientes, estimadores e
+    intervalos de confianza, como se describe en la sección~\ref{sec:pregunta}.
 \end{itemize}
 
 \subsection{Alcance}
@@ -84,5 +94,6 @@ El estudio incluye una jerarquía fija de 20 nodos (cuatro clústeres de cinco n
 CH predefinido y dos superclústeres), el protocolo AODV, tráfico UDP de tasa constante
 y cuatro escenarios de movilidad evaluados a cuatro velocidades. Quedan fuera del
 alcance la reelección dinámica de CH, la comparación entre protocolos de enrutamiento,
-el consumo de energía y el uso de la librería ns3-ai; estos aspectos se proponen como
-trabajo futuro.
+el consumo de energía y el uso de la librería ns3-ai. Estos aspectos no se descartan por
+falta de interés, sino para mantener el experimento acotado, y se proponen como trabajo
+futuro.

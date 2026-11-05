@@ -13,9 +13,10 @@
 
 \usepackage{graphicx} % Required for inserting images
 \usepackage{tcolorbox}
-\usepackage{amsmath,amsthm,amsfonts,amssymb,amscd, fancyhdr, color, comment, environ,mathrsfs}
+\usepackage{amsmath,amsthm,amsfonts,amssymb,amscd, fancyhdr, color, comment, environ}
 \usepackage{pdfpages}
-\usepackage{booktabs} 
+\usepackage{booktabs}
+\usepackage{url} % para los enlaces de referencias.bib
 \usepackage{pgfplots} 
 \pgfplotsset{compat=1.18}
 \usepackage{enumitem}
@@ -35,6 +36,7 @@
 
 % EDITAR SIEMPRE
 \newcommand\tema{Taller No 01 Simulación de MANET} % <-- Tema de la Tarea
+\newcommand\titulo{Informe final} % <-- Título del documento
 \newcommand\autores{
 David Fernando Benjumea Mora \\
 Daniel Alonso Gracia Pinto \\
@@ -51,32 +53,36 @@ John Jairo Páez Albino
 
 \begin{titlepage}
     \begin{center}
-        \vspace*{3cm}
+        \vspace*{1.5cm}
         \Huge
+        \textbf{\titulo}
+
+        \vspace{0.6cm}
+        \Large
         \textbf{\tema}
-        
-        \Huge
-        \materia    
+
+        \vspace{1.2cm}
+        \Large
+        \materia
         \vspace{1.5cm}
-        
+
         \vspace{1cm}
         \Large
         \text{Autores:} \\ \autores
-        
-        \vspace{7cm}
-        
+
+        \vspace{2cm}
+
         \Large
         \text{\grupo}
-         
+
         \text{Profesor: \profesor}                      % <-- Profesor
-        
+
         \vfill
-            
+
         \vspace{0.4cm}
-            
-        \includegraphics[width=0.35\textwidth]{Materiales/UNAL_Logo_Negro.png} 
-     
-        
+
+        \includegraphics[width=0.35\textwidth]{Materiales/UNAL_Logo_Negro.png}
+
         \text{\today}
     \end{center}
 \end{titlepage}
@@ -85,27 +91,33 @@ John Jairo Páez Albino
 \tableofcontents
 \newpage
 
-Es una tarea (implementación) pequeña, en consecuencia, así mismo deben ser sus entregables: pequeños pero completos. La solución de una tarea obligatoria automatizada también debe subirse al buzón del estudiante, pero, en este caso, los entregables mínimos son los siguientes:
-
-\section{Marco teórico}
-Sección con el marco teórico.
-
-\section{Descripción y justificación del problema a resolver}
-SecciónF con descripción y justificación del problema a resolver.
-
-\section{Diseño de la aplicación o solución}
-Usualmente diseños básicos emplean lenguajes simples tales como diagramas de flujo, diagramas de bloques, pseudocódigo mientras que diseños complejos suelen emplear lenguajes de diseño más sofisticados tales como UML.
-
-\section{Código fuente}
-Código fuente completo de la herramienta construida (incluidas las versiones utilizadas de librerías que no se encuentran en la instalación estándar del software).
+% =====================================================================
+%  Cuerpo del informe: una sección por archivo (ver README, sección 3).
+% =====================================================================
+\input{secciones/01-problema.tex}
+\input{secciones/02-pregunta-hipotesis.tex}
+\input{secciones/03-marco-teorico.tex}
+\input{secciones/04-diseno.tex}
+\input{secciones/05-codigo-fuente.tex}
 
 \section{Manual de usuario y manual técnico}
-Un archivo PDF con el manual de usuario y manual técnico.
+\label{sec:manuales}
 
-\section{Experimentación y análisis de resultados}
-Documentación de la experimentación y análisis de resultados para al menos 3 escenarios de prueba.
+El manual técnico y el manual de usuario se entregan en un documento aparte,
+\texttt{Manuales.pdf}. El manual técnico describe los requisitos, la instalación de
+ns-3, la arquitectura del programa y cómo extenderlo; el manual de usuario explica, paso
+a paso, cómo correr una simulación, ejecutar todos los escenarios, generar las gráficas e
+interpretar la salida. Ambos se generan desde \texttt{Manuales.tex} y comparten las
+fuentes de este informe.
 
-\section{Observaciones}
-El manual de usuario y manual tecnico podríamos dejarlo en un PDF aparte, lo mismo con la sección de codigo fuente. 
+\input{secciones/06-experimentacion.tex}
+\input{secciones/07-conclusiones.tex}
+
+% =====================================================================
+%  Referencias
+% =====================================================================
+\newpage
+\bibliographystyle{plain}
+\bibliography{referencias}
 
 \end{document}
