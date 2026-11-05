@@ -1,0 +1,98 @@
+% =====================================================================
+% Sección: Conclusiones y recomendaciones
+% Responsable: Parte 7 — Daniel Alonso Gracia Pinto
+% =====================================================================
+\section{Conclusiones}
+\label{sec:conclusiones}
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Respuesta a la pregunta de investigación.} En la MANET jerárquica de
+    dos niveles simulada, con enrutamiento AODV, la movilidad a nivel de clúster degrada
+    el desempeño mucho más que la movilidad a nivel de nodo. A igual velocidad, el
+    escenario con solo movilidad de clúster (E2) entrega entre 16 y 27 puntos
+    porcentuales menos paquetes que el escenario con solo movilidad de nodo (E1), y su
+    retardo es entre 1.3 y 4.8 veces mayor.
+
+    \item \textbf{Se acepta la hipótesis principal.} La prueba $t$ de Welch unilateral
+    rechaza $H_0$ para la PDR en las cuatro velocidades ($p \leq 0.002$) y para el
+    retardo en tres de las cuatro (5, 10 y 20\,m/s). Ambas métricas cumplen la regla de
+    decisión fijada antes del experimento (al menos tres de cuatro velocidades). Los
+    resultados son coherentes con el mecanismo propuesto: la movilidad de clúster rompe
+    los enlaces entre CH, por donde pasa todo el tráfico entre clústeres, mientras que
+    la movilidad de nodo solo altera rutas locales.
+
+    \item \textbf{El efecto de la velocidad depende del tipo de movilidad (HS1,
+    parcialmente respaldada).} Con movilidad de clúster, mayor velocidad implica menor
+    PDR y, sobre todo, mucho más retardo y jitter (el retardo pasa de unos 25\,ms a
+    94--101\,ms entre 1 y 20\,m/s). Con solo movilidad de nodo, la velocidad no tiene
+    efecto medible, porque en este diseño un miembro nunca sale del alcance de su CH.
+
+    \item \textbf{La movilidad de clúster domina el efecto combinado (HS2).} El escenario
+    con ambas movilidades (E3) no es significativamente distinto de E2 en ninguna
+    velocidad: la degradación no se suma, sino que la determina el nivel superior de la
+    jerarquía.
+
+    \item \textbf{La brecha entre ambos tipos de movilidad crece con la velocidad (HS3).}
+    La diferencia de retardo entre E2 y E1 crece de forma monótona (de 6\,ms a 74\,ms) y
+    la de PDR crece hasta 10\,m/s y luego se estabiliza en unos 26 puntos.
+
+    \item \textbf{Implicación práctica.} En redes jerárquicas, la estabilidad de la
+    columna vertebral entre cluster heads es el factor crítico del desempeño. Los
+    esfuerzos de diseño (elección de CH, alcance del backbone, rutas de respaldo entre
+    clústeres) rinden más que proteger los enlaces dentro de cada clúster.
+\end{enumerate}
+
+\section{Recomendaciones}
+\label{sec:recomendaciones}
+
+\subsection{Limitaciones del estudio}
+
+\begin{itemize}
+    \item \textbf{Velocidad efectiva de Random Waypoint.} Los clústeres hacen una pausa
+    fija de 2\,s en cada destino, y a mayor velocidad pasan una fracción mayor del tiempo
+    detenidos (cerca del 4\,\% a 1\,m/s y del 21\,\% a 20\,m/s). La velocidad media
+    efectiva es, por tanto, menor que la nominal, un problema conocido de este modelo
+    \cite{yoon2003harmful, navidi2004stationary}.
+
+    \item \textbf{Geometría que protege a E1.} Con regiones de $\pm 40$\,m y alcance de
+    60\,m, un miembro siempre queda al alcance directo de su CH. Esto explica la robustez
+    de E1, pero también significa que la conclusión depende de la relación entre el
+    tamaño de la región de los nodos y el alcance del clúster. Con regiones más grandes,
+    la movilidad de nodo podría pesar más.
+
+    \item \textbf{Modelo de propagación idealizado.} El modelo de disco no representa
+    desvanecimiento, sombras ni interferencia gradual: un enlace existe por completo o no
+    existe.
+
+    \item \textbf{Escala reducida.} Se usaron 20 nodos, 4 clústeres, 8 flujos de baja
+    tasa (16\,kbit/s), CH fijos dentro de su clúster y un solo protocolo (AODV). Los
+    resultados no deben generalizarse a cualquier MANET sin nuevos experimentos.
+
+    \item \textbf{Comparaciones múltiples.} Las pruebas de hipótesis se hicieron por
+    velocidad con $\alpha = 0.05$ sin ajuste por comparaciones múltiples. Para la PDR
+    esto no cambia la conclusión ($p \leq 0.002$ en todas las velocidades), pero la
+    prueba de retardo a 5\,m/s ($p = 0.029$) no superaría una corrección de Bonferroni.
+
+    \item \textbf{Diez réplicas por configuración.} Los intervalos de confianza de E2 y
+    E3 son amplios (por ejemplo, $\pm 21$\,ms en el retardo de E2 a 20\,m/s). Más
+    réplicas permitirían detectar diferencias menores, como la de retardo a 1\,m/s.
+\end{itemize}
+
+\subsection{Trabajo futuro}
+
+\begin{itemize}
+    \item Usar modelos de movilidad sin el sesgo de velocidad de Random Waypoint, como
+    Gauss-Markov o Random Direction, y un modelo de grupo como RPGM
+    \cite{hong1999group, camp2002survey}.
+    \item Variar el tamaño de la región de los nodos respecto al alcance del clúster,
+    para encontrar el punto en que la movilidad de nodo empieza a degradar la red.
+    \item Comparar AODV con protocolos proactivos como OLSR \cite{clausen2003olsr} o
+    DSDV, que reaccionan de forma distinta a la ruptura del backbone.
+    \item Medir la sobrecarga de enrutamiento (paquetes de control de AODV por paquete
+    de datos entregado), que en los datos ya disponibles crece claramente con la
+    movilidad de clúster.
+    \item Escalar a más nodos y niveles jerárquicos, mover también los superclústeres
+    (\texttt{--superSpeed}) y permitir la reelección dinámica de CH.
+    \item Explorar ns3-ai para adaptar en línea parámetros de enrutamiento o la
+    elección de CH según la movilidad observada.
+\end{itemize}

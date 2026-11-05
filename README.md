@@ -18,7 +18,7 @@ Según el enunciado y la plantilla de "tarea automatizada" del curso, los entreg
 4. **Informe** (`Entregable.pdf`) con: marco teórico, descripción y justificación del problema, diseño, código fuente, experimentación y análisis de **al menos 3 escenarios**, conclusiones y recomendaciones.
 5. **Manual técnico y manual de usuario** (`Manuales.pdf`).
 6. **Código fuente completo** con las versiones de software usadas.
-7. **Correo de entrega** con los nombres completos de los 7 integrantes y el rol de cada uno.
+7. **Correo de entrega** con los nombres completos de los 6 integrantes y el rol de cada uno.
 
 ---
 
@@ -193,7 +193,9 @@ El trabajo está organizado como una **cadena**: cada parte solo depende de las 
 | 4 | **José Esteban Alvarado Monroy** | Automatización de experimentos y gráficas | 3 | 5, 6, 7 |
 | 5 | **Óscar Iván Ulises Gutiérrez Palacios** | LaTeX, diseño de la solución y manual técnico | 3, 4 | 6, 7 |
 | 6 | **John Jairo Páez Albino** | Marco teórico, referencias y manual de usuario | 4, 5 | 7 |
-| 7 | **Daniel Santiago Rodríguez Rodríguez** | Análisis, conclusiones, revisión final y entrega | 1, 4, 5, 6 | Profesor |
+| 7 | **Daniel Alonso Gracia Pinto** (análisis y conclusiones) · **Óscar Iván Ulises Gutiérrez Palacios** (revisión final y entrega) | Análisis, conclusiones, revisión final y entrega | 1, 4, 5, 6 | Profesor |
+
+> **Cambio de integrantes (4 nov 2026):** Daniel Santiago Rodríguez Rodríguez, inicialmente a cargo de la Parte 7, salió del grupo por no reportarse. El grupo queda con **6 integrantes**: el análisis y las conclusiones los asumió Daniel Gracia, y la revisión final y el correo de entrega, Óscar Gutiérrez.
 
 > Las partes 5 y 6 tienen trabajo que pueden adelantar desde el principio (estructura de LaTeX, marco teórico), y lo que depende de otros lo terminan cuando les llegue. Si alguien prefiere intercambiar su parte, se puede, siempre que se actualice esta tabla.
 
@@ -328,7 +330,7 @@ Debe terminar con `Total: 120/120 (100.0 %)` y `RESULTADO: la red jerárquica es
 **Archivos:** `Entregable.tex`, `Manuales.tex` (estructura + manual técnico), `secciones/04-diseno.tex`, `.github/workflows/`
 **Recibe de las Partes 3 y 4:** el programa final, los scripts y su forma de uso.
 
-- [ ] **Se puede adelantar desde el principio:** reorganizar `Entregable.tex` para que incluya `secciones/*.tex` con `\input`, con bibliografía (`referencias.bib`) y paquete para código (`listings` o `minted`). Quitar el texto de instrucciones de la plantilla, poner el título y los 7 autores.
+- [ ] **Se puede adelantar desde el principio:** reorganizar `Entregable.tex` para que incluya `secciones/*.tex` con `\input`, con bibliografía (`referencias.bib`) y paquete para código (`listings` o `minted`). Quitar el texto de instrucciones de la plantilla, poner el título y los autores.
 - [ ] **Se puede adelantar:** crear `Manuales.tex` (portada + Parte I manual técnico + Parte II manual de usuario) y agregarlo al workflow de CI.
 - [ ] Sección **Diseño de la solución**:
   - Diagrama de bloques de la arquitectura jerárquica (superclústeres, clústeres, CH, backbone).
@@ -355,18 +357,20 @@ Debe terminar con `Total: 120/120 (100.0 %)` y `RESULTADO: la red jerárquica es
 - [ ] **Entrega a la Parte 7:** marco teórico, referencias y manual de usuario listos.
 
 ### Parte 7 — Análisis, conclusiones, revisión final y entrega
-**Responsable:** Daniel Santiago Rodríguez Rodríguez
+**Responsables:** Daniel Alonso Gracia Pinto (análisis, conclusiones y recomendaciones) · Óscar Iván Ulises Gutiérrez Palacios (revisión final y correo de entrega)
 **Archivos:** `secciones/06-experimentacion.tex`, `secciones/07-conclusiones.tex`
 **Recibe de:** la Parte 1 (pregunta e hipótesis), la Parte 4 (resultados y figuras) y las Partes 5 y 6 (informe y manuales).
 
 Es la **última parte** de la cadena: recoge todo y termina con el envío.
 
-- [ ] Sección **Experimentación y análisis de resultados**: descripción de cada escenario, tabla de parámetros, tablas con medias e IC 95 %, figuras de la Parte 4 e interpretación de E0–E3.
-- [ ] Comparar E1 vs. E2 (la pregunta central) y discutir el efecto de la velocidad.
-- [ ] **Conclusiones**: ¿se acepta o se rechaza la hipótesis de la Parte 1? ¿con qué evidencia?
-- [ ] **Recomendaciones**: limitaciones del estudio y trabajo futuro (más nodos, otros protocolos como OLSR/DSDV, RPGM, ns3-ai).
-- [ ] Revisión final del PDF completo (coherencia entre secciones, ortografía, figuras referenciadas) y verificar que `Entregable.pdf` y `Manuales.pdf` compilan.
-- [ ] Redactar y enviar el **correo de entrega** (sección 6).
+- [x] Sección **Experimentación y análisis de resultados**: descripción de cada escenario, tabla de parámetros, tablas con medias e IC 95 %, figuras de la Parte 4 e interpretación de E0–E3. *`secciones/06-experimentacion.tex`; la tabla se verificó número a número contra `resultados/tabla_estadistica.csv`.*
+- [x] Comparar E1 vs. E2 (la pregunta central) y discutir el efecto de la velocidad. *Incluye HS1–HS3, con pruebas de Welch E3 vs. E2 y 1 vs. 20 m/s calculadas sobre `resultados/resumen.csv`.*
+- [x] **Conclusiones**: ¿se acepta o se rechaza la hipótesis de la Parte 1? ¿con qué evidencia? *Se acepta: PDR 4/4 y retardo 3/4 velocidades (`secciones/07-conclusiones.tex`).*
+- [x] **Recomendaciones**: limitaciones del estudio y trabajo futuro (más nodos, otros protocolos como OLSR/DSDV, RPGM, ns3-ai).
+- [ ] *(Óscar)* Revisión final del PDF completo (coherencia entre secciones, ortografía, figuras referenciadas) y verificar que `Entregable.pdf` y `Manuales.pdf` compilan.
+- [ ] *(Óscar)* Redactar y enviar el **correo de entrega** (sección 6).
+
+> Para que las secciones 06 y 07 aparezcan en el PDF, `Entregable.tex` (Parte 5) debe incluirlas con `\input{secciones/06-experimentacion.tex}` y `\input{secciones/07-conclusiones.tex}`.
 
 ---
 
@@ -392,5 +396,5 @@ git push
 
 Responder **únicamente al profesor** el correo *"ME01: Enunciado y entrega del Taller No 01 Simulación de MANET"* desde el correo institucional, con:
 
-- Nombres completos de los 7 integrantes y su rol (tabla de la sección 4).
+- Nombres completos de los 6 integrantes y su rol (tabla de la sección 4).
 - Adjuntos: `Entregable.pdf`, `Manuales.pdf`, código fuente (`simulacion/` y `scripts/` en un `.zip`) y el enlace al repositorio.

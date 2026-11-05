@@ -1,28 +1,301 @@
-Trabajo previo:
+===============================================================================
+ TALLER 01 — SIMULACIÓN DE MANETs
+ Modelos estocásticos y simulación en computación y comunicaciones (2026-2S)
+ Profesor: Jorge Eduardo Ortiz Triviño
+ Entrega: miércoles 4 de noviembre de 2026, 11:59 pm
+===============================================================================
 
-a.      Entrar en detalles más técnicos y precisos sobre redes ad hoc. Para ello pueden emplear el material incluido en nuestra biblioteca digital en la carpeta MANETS. El enlace para acceder directamente es:  https://drive.google.com/drive/folders/1midsyo6oDcCKp5cPIzayFMzYHD_JTeK8?usp=drive_link.
+Este archivo reúne TODAS las especificaciones que debe cumplir el taller y, al
+final, el estado de cumplimiento del grupo. El plan de trabajo detallado está en
+README.md.
 
-b.      Instalar NS-3.  Pueden bajar el software completo de la página https://www.nsnam.org/. La versión más reciente es la 3.46; sin embargo, los videos de instalación con los que disponemos en nuestra biblioteca digital corresponden a la versión 3.43 (el enlace a la carpeta completa de NS-3 en nuestra biblioteca  es (recomendado instalarlo con el componente de AI): https://drive.google.com/drive/folders/1k9QdPRldDsVUrhxIXji4YQmkvqN3XWtL?usp=drive_link).
-
-d.      A partir de ejemplos que vienen incluidos en la instalación en la carpeta de ejemplos, comprender cómo se simulan redes inalámbricas y en particular MANETs.  En el video  https://drive.google.com/file/d/1OPKg07rYGy5pDwT5jasOjTGs4wqp40Lj/view?usp=drive_link se aclaran unas dudas de instalación del software y principalmente se hacen los comentarios de tres ejemplos en el campo de las MANETs.
-
-e.       Para la creación de los clústeres pueden tomar como referencias el ejemplo: Mixed wired Wireless que pueden encontrar a través del enlace: https://www.nsnam.org/docs/release/3.27/doxygen/mixed-wired-wireless_8cc_source.html donde se crean redes LAN para segmentar los clúster y enlazarlos.
-
-f.       Otro ejemplo es wifi aggregation donde se pueden tomar diferentes AP (Clúster) para generar datos: https://www.nsnam.org/docs/release/3.27/doxygen/wifi-aggregation_8cc_source.html.
-
-g.      El libro Wireless Network Simulation: A Guide using Ad Hoc Networks and the ns-3 Simulator. Que pueden localizar a través del enlace https://drive.google.com/file/d/1mboH0zSkfBY6YfiSrcpXeeLj86kmFxrA/view?usp=drive_link presenta cómo simular redes Ad Hoc empleando NS-3.
-
-3.      Enunciado del problema:
-
-a.      El grupo debe formular una indagación (pregunta de investigación) (recuerden a Newton, quien, de acuerdo con una de nuestras recientes lecturas del libro del profesor Frank, usaba este truco científico) sobre modelos de movilidad en MANET, que involucre un sistema MANET jerárquico con al menos tres clústeres en el primer nivel y dos en el segundo. El sistema modelado y simulado debe permitir movimiento tanto a nivel de Cluster como también a nivel de nodo. Dicha indagación debe tener un nivel de dificultad intermedio, es decir, ni muy trivial ni muy compleja. Emplee el método científico para responder la indagación seleccionada.
-
-b.      El grupo debe hacer el análisis, diseño e implementación de la solución empleado el lenguaje NS-3.  Es deseable, mas no necesario, emplear la librería ns3-ai (enlace de partida: https://github.com/hust-diangroup/ns3-ai), componente que reemplazó a AI Gym.
-
-c.      El grupo debe realizar la documentación de los resultados, análisis de resultados, conclusiones y recomendaciones.
+Contenido:
+  PARTE A. Enunciado del taller (correo del profesor, texto completo)
+  PARTE B. Reglas generales del curso que aplican al taller
+  PARTE C. Indagación escogida por el grupo
+  PARTE D. Matriz de cumplimiento (estado al 4 de noviembre de 2026, 22:40)
 
 
-INDAGACIÓN ESCOGIDA: Velocidad del clúster vs. velocidad del nodo
-¿Qué afecta más la tasa de entrega de paquetes en una MANET jerárquica: aumentar la velocidad de movimiento de los clústeres o aumentar la velocidad de los nodos dentro de cada clúster?
-Variables independientes: velocidad del clúster (p. ej. 0, 2, 5, 10 m/s) y velocidad de los nodos (mismos valores).
-Variable dependiente: PDR (packet delivery ratio) y retardo.
-Hipótesis posible: la movilidad del clúster degrada más el rendimiento, porque rompe los enlaces entre clústeres (los del segundo nivel), mientras que la de los nodos solo afecta enlaces locales.
+===============================================================================
+ PARTE A. ENUNCIADO DEL TALLER (correo del profesor)
+===============================================================================
+
+Respetados estudiantes:
+
+En este mensaje encontrarán la información relacionada con la realización del
+Taller 01 de nuestro curso.
+
+1. Trabajo en equipo: Para la realización del Taller #01 "Simulación de MANETs",
+   deben conformar grupos de máximo 7 (siete) estudiantes.
+
+2. Trabajo previo:
+
+   a. Entrar en detalles más técnicos y precisos sobre redes ad hoc. Para ello
+      pueden emplear el material incluido en nuestra biblioteca digital en la
+      carpeta MANETS. El enlace para acceder directamente es:
+      https://drive.google.com/drive/folders/1midsyo6oDcCKp5cPIzayFMzYHD_JTeK8?usp=drive_link
+
+   b. Instalar NS-3. Pueden bajar el software completo de la página
+      https://www.nsnam.org/. La versión más reciente es la 3.46; sin embargo,
+      los videos de instalación con los que disponemos en nuestra biblioteca
+      digital corresponden a la versión 3.43 (el enlace a la carpeta completa de
+      NS-3 en nuestra biblioteca es (recomendado instalarlo con el componente de
+      AI):
+      https://drive.google.com/drive/folders/1k9QdPRldDsVUrhxIXji4YQmkvqN3XWtL?usp=drive_link
+
+   c. En la carpeta
+      https://drive.google.com/drive/folders/1Rb-yzW08GS8vGg14Qw9SexcPfLwfYfZY?usp=drive_link
+      encuentran el video de instalación de NS-3 Versión 3.43-ai y un archivo
+      .txt con el resumen de comandos empleados en el video.
+
+   d. A partir de ejemplos que vienen incluidos en la instalación en la carpeta
+      de ejemplos, comprender cómo se simulan redes inalámbricas y en particular
+      MANETs. En el video
+      https://drive.google.com/file/d/1OPKg07rYGy5pDwT5jasOjTGs4wqp40Lj/view?usp=drive_link
+      se aclaran unas dudas de instalación del software y principalmente se
+      hacen los comentarios de tres ejemplos en el campo de las MANETs.
+
+   e. Para la creación de los clústeres pueden tomar como referencia el ejemplo
+      Mixed wired Wireless que pueden encontrar a través del enlace:
+      https://www.nsnam.org/docs/release/3.27/doxygen/mixed-wired-wireless_8cc_source.html
+      donde se crean redes LAN para segmentar los clústeres y enlazarlos.
+
+   f. Otro ejemplo es wifi aggregation, donde se pueden tomar diferentes AP
+      (clúster) para generar datos:
+      https://www.nsnam.org/docs/release/3.27/doxygen/wifi-aggregation_8cc_source.html
+
+   g. El libro "Wireless Network Simulation: A Guide using Ad Hoc Networks and
+      the ns-3 Simulator", que pueden localizar a través del enlace
+      https://drive.google.com/file/d/1mboH0zSkfBY6YfiSrcpXeeLj86kmFxrA/view?usp=drive_link
+      presenta cómo simular redes Ad Hoc empleando NS-3.
+
+3. Enunciado del problema:
+
+   a. El grupo debe formular una indagación (pregunta de investigación)
+      (recuerden a Newton, quien, de acuerdo con una de nuestras recientes
+      lecturas del libro del profesor Frank, usaba este truco científico) sobre
+      modelos de movilidad en MANET, que involucre un sistema MANET jerárquico
+      con al menos tres clústeres en el primer nivel y dos en el segundo. El
+      sistema modelado y simulado debe permitir movimiento tanto a nivel de
+      clúster como también a nivel de nodo. Dicha indagación debe tener un nivel
+      de dificultad intermedio, es decir, ni muy trivial ni muy compleja. Emplee
+      el método científico para responder la indagación seleccionada.
+
+   b. El grupo debe hacer el análisis, diseño e implementación de la solución
+      empleando el lenguaje NS-3. Es deseable, mas no necesario, emplear la
+      librería ns3-ai (enlace de partida: https://github.com/hust-diangroup/ns3-ai),
+      componente que reemplazó a AI Gym.
+
+   c. El grupo debe realizar la documentación de los resultados, análisis de
+      resultados, conclusiones y recomendaciones.
+
+4. Un ejemplo de indagación solucionado con NS-3 para redes Ad Hoc jerárquicas
+   lo encuentran en el artículo "Estimation of a growth factor to achieve
+   scalable ad hoc networks", escrito por Juan Pablo Ospina y Jorge Eduardo
+   Ortiz Triviño. El artículo en formato PDF lo pueden ubicar a través del
+   enlace https://revistas.javeriana.edu.co/index.php/iyu/article/view/16695
+
+5. Entrega del trabajo realizado:
+
+   a. El trabajo debe entregarse, de acuerdo con el calendario académico de la
+      asignatura, a más tardar a las 11:59 pm del miércoles 04 de noviembre de
+      2026.
+
+   b. La entrega del trabajo la realiza un estudiante del grupo respondiendo
+      (únicamente al profesor) este mensaje desde su correo institucional. En el
+      cuerpo del mensaje deben informarse los nombres y apellidos completos de
+      los miembros del equipo, reseñando brevemente el rol que desempeñó cada
+      uno.
+
+   c. Los entregables que deben adjuntar al mensaje de entrega son (al menos)
+      los mismos que se requieren para una tarea automatizada (Parte B, sección
+      3.1.1); no olviden que deben incluir el manual técnico y el manual de
+      usuario.
+
+
+===============================================================================
+ PARTE B. REGLAS GENERALES DEL CURSO QUE APLICAN AL TALLER
+===============================================================================
+
+--- 3.1.3 Taller ---------------------------------------------------------------
+
+El taller es un trabajo práctico, en alguna de las áreas de la computación que
+ameriten estudios de simulación o la aplicación directa de resultados teóricos
+en el campo de la informática, que se desarrolla en grupos de máximo 5
+estudiantes (para este taller el enunciado amplía el límite a 7). Implica el uso
+de herramientas especializadas o lenguajes específicos y la aplicación de parte
+de la teoría vista en clase para solucionar un problema particular con una
+dificultad intermedia. Debido a su naturaleza general, el taller suele diferir
+de semestre a semestre; sin embargo, al ser un desarrollo de software, sus
+entregables son básicamente los mismos que se solicitan con las tareas
+obligatorias automatizadas (sección 3.1.1). En el enunciado del problema a
+resolver para el taller se dan más especificaciones y detalles de su desarrollo,
+puesto que ellos dependen, en gran medida, del tema y del problema planteado.
+El taller se sustenta, normalmente, en horario extraclase.
+
+--- 3.1.1 Tareas obligatorias automatizadas (herramientas y entregables) ------
+
+Durante el desarrollo del curso aparecerán ejercicios y problemas cuya solución
+requerirá del uso de herramientas informáticas (lenguajes de programación,
+simuladores, hojas de cálculo, etc.). En esos casos estará permitido el uso de
+cualquier herramienta computacional que el estudiante, con su criterio de
+ingeniero, considere pertinente emplear. El enunciado establecerá, sin embargo,
+aquellas herramientas que no puedan ser empleadas en ese ejercicio en
+particular.
+
+Cuando para realizar la solución el estudiante tenga que construir un programa
+o aplicación, por omisión, estará únicamente permitido emplear el lenguaje de
+programación en su instalación estándar y una librería especializada de
+estructuras de datos (el lenguaje y la librería los seleccionan los
+estudiantes). Si se requiere emplear otras herramientas o librerías que no sean
+instaladas en la versión estándar, deben pedir autorización al profesor para
+poder emplearlas (en ningún caso se permitirá el uso de herramientas o librerías
+que ya tengan dentro de sus funcionalidades la esencia de la solución del
+problema planteado).
+
+Es una tarea (implementación) pequeña; en consecuencia, así mismo deben ser sus
+entregables: pequeños pero completos. Los entregables mínimos son:
+
+   a. Un archivo PDF con el marco teórico.
+   b. Un archivo PDF con descripción y justificación del problema a resolver.
+   c. Diseño de la aplicación o solución (usualmente diseños básicos emplean
+      lenguajes simples tales como diagramas de flujo, diagramas de bloques,
+      pseudocódigo, mientras que diseños complejos suelen emplear lenguajes de
+      diseño más sofisticados tales como UML).
+   d. Código fuente completo de la herramienta construida (incluidas las
+      versiones utilizadas de librerías que no se encuentran en la instalación
+      estándar del software).
+   e. Un archivo PDF con el manual de usuario y manual técnico.
+   f. Documentación de la experimentación y análisis de resultados para al
+      menos 3 escenarios de prueba.
+
+
+===============================================================================
+ PARTE C. INDAGACIÓN ESCOGIDA POR EL GRUPO
+===============================================================================
+
+(Versión final, fijada en la Parte 1. Detalle formal en
+secciones/02-pregunta-hipotesis.tex y en README.md, sección 2.)
+
+Pregunta:
+  En una MANET jerárquica de dos niveles con enrutamiento AODV, ¿qué degrada más
+  el desempeño de la red —la movilidad a nivel de clúster o la movilidad a nivel
+  de nodo— y cómo cambia ese efecto al aumentar la velocidad?
+
+Hipótesis principal:
+  A igual velocidad, la movilidad de clúster degrada más la PDR y el retardo que
+  la movilidad de nodo, porque rompe los enlaces entre cluster heads (backbone),
+  mientras que la de nodo solo altera rutas locales.
+  Hipótesis secundarias: HS1 (empeora con la velocidad), HS2 (E3 igual o peor
+  que el peor de E1 y E2), HS3 (la diferencia E1–E2 crece con la velocidad).
+
+Sistema:
+  20 nodos; nivel 1: 4 clústeres (A, B, C, D) de 5 nodos (1 CH + 4 miembros);
+  nivel 2: 2 superclústeres (X = {A, B}, Y = {C, D}). Movilidad en tres capas
+  con HierarchicalMobilityModel: superclúster (fijo) → clúster (Random
+  Waypoint ±150 m) → nodo (Random Walk 2D ±40 m).
+
+Experimento:
+  Escenarios E0 (sin movilidad), E1 (solo nodo), E2 (solo clúster), E3 (ambas);
+  velocidades 1, 5, 10 y 20 m/s; 10 réplicas → 130 corridas.
+  Variables dependientes: PDR, retardo, throughput y jitter (FlowMonitor).
+  Análisis: IC 95 % (t de Student) y prueba t de Welch unilateral E2 vs. E1.
+
+Resultado:
+  Se acepta la hipótesis principal: E2 tiene menor PDR que E1 en las 4
+  velocidades (16 a 27 puntos menos) y mayor retardo en 3 de 4 (regla de
+  decisión: al menos 3 de 4).
+
+
+===============================================================================
+ PARTE D. MATRIZ DE CUMPLIMIENTO (4 nov 2026, 22:40 — tras el pull de la Parte 5)
+===============================================================================
+
+Convenciones:  [OK] cumplido   [PARCIAL] avanzado, falta algo   [FALTA] no existe
+
+--- Enunciado del taller (Parte A) ---------------------------------------------
+
+[OK]      1.   Grupo de máximo 7 estudiantes → somos 6 (Daniel Santiago
+               Rodríguez Rodríguez salió del grupo el 4 nov por no reportarse).
+[OK]      2b.  NS-3 instalado → ns-3.43 (versión de los videos del curso).
+[OK]      3a.  Pregunta de investigación sobre modelos de movilidad → Parte C.
+[OK]      3a.  Al menos 3 clústeres en el primer nivel → 4 (A, B, C, D).
+[OK]      3a.  Al menos 2 clústeres en el segundo nivel → 2 (X, Y).
+[OK]      3a.  Movimiento a nivel de clúster y a nivel de nodo → 3 capas;
+               validado con 46/46 pruebas (scripts/validar_movilidad.py).
+[OK]      3a.  Método científico → secciones/02-pregunta-hipotesis.tex
+               (observación → pregunta → hipótesis → experimento → análisis
+               → conclusión).
+[OK]      3b.  Análisis, diseño e implementación en NS-3 →
+               simulacion/manet-jerarquica.cc.
+[OK]      3b.  ns3-ai (deseable, no obligatorio) → no se usa; justificado en
+               secciones/05-codigo-fuente.tex.
+[OK]      3c.  Documentación de resultados y análisis →
+               secciones/06-experimentacion.tex.
+[OK]      3c.  Conclusiones y recomendaciones → secciones/07-conclusiones.tex.
+[OK]      4.   Relación con el artículo de Ospina y Ortiz → citado en
+               01-problema.tex y 03-marco-teorico.tex.
+[FALTA]   5b.  Correo de entrega (un estudiante, solo al profesor, correo
+               institucional, nombres completos y rol de cada uno) →
+               A cargo de Óscar Gutiérrez. Debe listar a los 6 integrantes
+               actuales (NO incluir a Santiago) con su rol real (README,
+               sección 4):
+                 - David Fernando Benjumea Mora: Parte 1 (formulación y red base)
+                 - Daniel Alonso Gracia Pinto: Parte 2 (movilidad) y Parte 7
+                   (análisis, conclusiones y recomendaciones)
+                 - Stephan Alain Roland García Martiquet: Parte 3 (tráfico y
+                   métricas)
+                 - José Esteban Alvarado Monroy: Parte 4 (experimentos y gráficas)
+                 - Óscar Iván Ulises Gutiérrez Palacios: Parte 5 (LaTeX, diseño y
+                   manual técnico) y Parte 7 (revisión final y entrega)
+                 - John Jairo Páez Albino: Parte 6 (marco teórico, referencias y
+                   manual de usuario)
+[FALTA]   5c.  Adjuntos del correo → dependen de los PDF de abajo.
+
+--- Entregables mínimos (Parte B, 3.1.1) ---------------------------------------
+
+[PARCIAL] a.   Marco teórico → escrito (secciones/03-marco-teorico.tex, Parte 6)
+               pero NO incluido en Entregable.tex.
+[PARCIAL] b.   Descripción y justificación del problema → escrito
+               (secciones/01-problema.tex, Parte 1) pero NO incluido en
+               Entregable.tex.
+[PARCIAL] c.   Diseño de la solución (diagramas de bloques / flujo) →
+               escrito (secciones/04-diseno.tex, Parte 5) con diagramas de
+               arquitectura, movilidad, flujo de simulación y flujo
+               experimental, pero NO incluido en Entregable.tex. OJO: incluye
+               Materiales/diagramas/{arquitectura,movilidad,flujo-simulacion}.pdf
+               y esos PDF NO existen en el repo (solo sus fuentes en
+               Materiales/diagramas/fuentes/*.tex) ni los genera el workflow:
+               al incluir la sección, la compilación fallará.
+[PARCIAL] d.   Código fuente completo → simulacion/ y scripts/ completos;
+               sección 05-codigo-fuente.tex escrita. Falta: versiones exactas
+               de pandas, matplotlib y scipy (hoy dice solo "Python 3.10+").
+               Referencia en el entorno de validación: Python 3.10, pandas
+               1.3.5, matplotlib 3.5.1, scipy 1.8.0 (paquetes de Ubuntu 22.04).
+[OK]      e.   Manual de usuario y manual técnico (PDF) → Manuales.tex (Parte 5)
+               incluye secciones/manual-tecnico.tex (Parte 5) y
+               secciones/manual-usuario.tex (Parte 6); el workflow genera
+               Manuales.pdf. Compilación aún no verificada.
+[OK]      f.   Al menos 3 escenarios con experimentación y análisis → 4
+               escenarios (E0–E3), 130 corridas, resultados en resultados/ y
+               análisis en secciones/06-experimentacion.tex.
+
+--- Ensamblaje de los PDF -------------------------------------------------------
+
+[PARCIAL] Entregable.tex: portada con los 6 autores ya corregida, pero el
+          cuerpo sigue siendo la plantilla (textos de instrucciones) y no
+          incluye NINGUNA sección con \input (01 a 07) ni la bibliografía. Hoy
+          el PDF no tiene el contenido del grupo (Parte 5).
+[OK]      Manuales.tex existe y el workflow lo compila (Parte 5).
+[FALTA]   Diagramas del diseño en PDF (ver literal c).
+[FALTA]   Revisión final del PDF (Parte 7, Óscar).
+
+--- Riesgos a tener en cuenta ---------------------------------------------------
+
+- Librerías no estándar: la regla 3.1.1 pide autorización para librerías fuera
+  de la instalación estándar. ns-3 lo exige el propio enunciado; pandas,
+  matplotlib y scipy se usan solo para analizar resultados, no para resolver el
+  problema, pero conviene declararlas con su versión (literal d) y mencionarlo
+  en el correo.
+- Sustentación: el taller se sustenta en horario extraclase. Cada integrante
+  debe poder explicar su parte.

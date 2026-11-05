@@ -1,0 +1,39 @@
+# --- Archivos auxiliares de LaTeX (se regeneran al compilar) ---
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.synctex.gz
+*.nav
+*.snm
+*.xdv
+
+# PDFs finales: los genera GitHub Actions y quedan en Releases.
+# Solo se ignoran los de la raíz; los diagramas en Materiales/diagramas/*.pdf
+# SÍ deben subirse, porque secciones/04-diseno.tex los incluye.
+/Entregable.pdf
+/Manuales.pdf
+
+# --- Resultados crudos de ns-3 (130 XML de FlowMonitor; se regeneran con
+# scripts/correr_escenarios.sh). Sí se suben resumen.csv, las tablas y figuras.
+resultados/raw/
+
+# --- Python ---
+__pycache__/
+*.pyc
+
+# --- Editores y sistema ---
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
