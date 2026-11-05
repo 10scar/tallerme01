@@ -7,8 +7,7 @@
 
 \subsection{Método científico aplicado}
 
-El trabajo sigue las etapas del método científico \cite{bunge1995ciencia}. Más que un
-formalismo, este método obliga a fijar la pregunta, la hipótesis y el criterio de
+El trabajo sigue las etapas del método científico \cite{bunge1995ciencia}. Este método obliga a fijar la pregunta, la hipótesis y el criterio de
 decisión \emph{antes} de mirar los datos, lo que evita acomodar las conclusiones a los
 resultados. La tabla~\ref{tab:metodo} resume cómo se concreta cada etapa.
 
@@ -55,9 +54,7 @@ cómo cambia ese efecto al aumentar la velocidad?}
 el desempeño que la movilidad de nodo: produce una menor tasa de entrega de paquetes y un
 mayor retardo. La razón esperada es que el movimiento de un clúster rompe los enlaces
 entre cluster heads, por los que pasa todo el tráfico entre clústeres, mientras que el
-movimiento de los nodos solo altera rutas cortas dentro de cada clúster. Se apuesta, en
-otras palabras, a que importa más \emph{qué} enlace se rompe que \emph{cuántos} se
-rompen.
+movimiento de los nodos solo altera rutas cortas dentro de cada clúster.
 
 Sea $\mu_{k}^{\mathrm{PDR}}(v)$ la PDR media del escenario $k$ a la velocidad $v$, y
 $\mu_{k}^{D}(v)$ su retardo medio. Para cada velocidad $v$ se plantean:
@@ -73,8 +70,7 @@ donde E1 es el escenario con solo movilidad de nodo y E2 el escenario con solo
 movilidad de clúster (tabla~\ref{tab:escenarios}).
 
 \textbf{Hipótesis secundarias.} La hipótesis principal compara los dos tipos de
-movilidad a una velocidad dada; las secundarias amplían la mirada al papel de la
-velocidad y a la combinación de ambos movimientos:
+movilidad a una velocidad dada; las secundarias consideran el efecto de la velocidad y de la combinación de ambos movimientos:
 \begin{itemize}
     \item \textbf{HS1:} en los escenarios con movimiento (E1, E2 y E3), el desempeño
     empeora a medida que aumenta la velocidad.
@@ -150,13 +146,12 @@ distintas (parámetro \texttt{RngRun} de ns-3), lo que da
 $(3 \times 4 + 1) \times 10 = 130$ corridas.
 
 Para que E1 y E2 sean comparables, en ambos se mueve \textbf{una sola capa} a la misma
-velocidad $v$: los nodos en E1 y los clústeres en E2. Así, cualquier diferencia entre
-ellos puede atribuirse al tipo de movilidad y no a otra variable. Los superclústeres permanecen fijos
+velocidad $v$: los nodos en E1 y los clústeres en E2. Así, la diferencia entre ellos puede atribuirse al tipo de movilidad. Los superclústeres permanecen fijos
 en todos los escenarios; su función es organizar la jerarquía y delimitar la región en la
 que se mueven sus clústeres.
 
 El alcance de cada canal se fija explícitamente con un modelo de disco
-(\texttt{RangePropagationLossModel}): todo receptor dentro del alcance recibe la señal y
+(\texttt{Range\allowbreak{}Propagation\allowbreak{}LossModel}): todo receptor dentro del alcance recibe la señal y
 ninguno fuera de él. Con el modelo por defecto de ns-3 (pérdida log-distancia), la
 potencia de transmisión por defecto y el umbral de detección de preámbulo de ns-3.43
 ($-82$\,dBm), un enlace 802.11b a 1\,Mbps solo alcanza unos 50\,m (medido: 10 de 10
@@ -165,9 +160,7 @@ separados 150\,m. El modelo de disco, además, hace que la geometría del experi
 fácil de controlar y de explicar. Un alcance de 60\,m dentro del clúster (comparable
 a la región de $\pm 40$\,m en que se mueven los nodos) y de 250\,m entre CH (comparable a
 la separación de 150\,m entre clústeres y a su región de $\pm 150$\,m) hace que ambos
-tipos de movilidad puedan romper enlaces, que es justamente lo que se quiere medir. Se
-renuncia con ello a algo de realismo físico a cambio de un experimento cuyo
-comportamiento se puede razonar y verificar.
+tipos de movilidad puedan romper enlaces, que es justamente lo que se quiere medir.
 
 \begin{table}[h]
 \centering
@@ -182,7 +175,7 @@ Jerarquía & Nivel 1: clústeres A, B, C, D; nivel 2: X = \{A, B\}, Y = \{C, D\}
 Canales & Un canal WiFi por clúster y un canal backbone compartido por los 4 CH \\
 Estándar WiFi & IEEE 802.11b, modo ad hoc, tasa fija DSSS 1\,Mbps
 (\texttt{ConstantRateWifiManager}) \\
-Propagación & Modelo de disco (\texttt{RangePropagationLossModel}) con retardo de
+Propagación & Modelo de disco (\texttt{Range\allowbreak{}Propagation\allowbreak{}LossModel}) con retardo de
 velocidad constante \\
 Alcance efectivo & 60\,m dentro de cada clúster y 250\,m en el backbone entre CH \\
 Potencia de transmisión & Valor por defecto de ns-3 \\
@@ -212,9 +205,7 @@ conectada y el cambio se documenta.}
 \subsection{Método de análisis estadístico}
 \label{sec:analisis-est}
 
-Cada corrida es una realización independiente del proceso estocástico de movilidad, de
-modo que una sola corrida no basta para concluir nada: dos semillas distintas pueden dar
-resultados muy diferentes. Por eso, para cada configuración y cada métrica se calcula la
+Cada corrida es una realización independiente del proceso estocástico de movilidad. Para cada configuración y cada métrica se calcula la
 media muestral $\bar{x}$, la desviación estándar $s$ y el intervalo de confianza del
 95\,\%:
 \[
@@ -227,6 +218,5 @@ unilateral entre E2 y E1 con nivel de significancia $\alpha = 0.05$. Se define d
 antemano la siguiente \textbf{regla de decisión}: la hipótesis principal se considera
 respaldada si se rechaza $H_0^{\mathrm{PDR}}$ en al menos tres de las cuatro
 velocidades; si se rechaza en menos, no se acepta. El mismo criterio se aplica al
-retardo. Fijar esta regla de antemano es lo que da peso a la conclusión: el resultado
-puede respaldar la hipótesis o refutarla, pero no reinterpretarse a posteriori. Las hipótesis secundarias se evalúan comparando las medias y sus intervalos de
+retardo. Las hipótesis secundarias se evalúan comparando las medias y sus intervalos de
 confianza en las gráficas de desempeño contra velocidad.

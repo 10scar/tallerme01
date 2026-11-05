@@ -9,9 +9,10 @@ Esta sección describe cómo se construyó el sistema de simulación con el que 
 la pregunta de investigación. El diseño parte de una restricción metodológica: para
 poder atribuir los efectos observados a cada tipo de movilidad, el sistema debe permitir
 activar y desactivar por separado la movilidad de clúster y la de nodo, manteniendo
-constante todo lo demás. De esa restricción se derivan las cuatro decisiones centrales
-que se explican a continuación: la topología jerárquica, la movilidad en capas, el flujo
-interno del programa y el diseño experimental que permite comparar los escenarios.
+constante todo lo demás. De esa restricción se derivan las tres decisiones centrales
+que se explican a continuación: la topología jerárquica, la movilidad en capas y el flujo
+interno del programa. El diseño experimental con el que se comparan los escenarios se
+describe en la sección~\ref{sec:diseno-exp}.
 
 \subsection{Arquitectura jerárquica}
 \label{sec:diseno-arquitectura}
@@ -24,7 +25,7 @@ muestra esta estructura.
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.95\textwidth]{Materiales/diagramas/arquitectura.pdf}
+\includegraphics[width=\textwidth]{Materiales/diagramas/arquitectura.pdf}
 \caption{Arquitectura jerárquica de la MANET. Cada clúster tiene un canal WiFi ad hoc
 independiente y una subred propia; los cuatro \emph{cluster heads} se comunican entre sí
 por un canal \emph{backbone} compartido.}
@@ -86,7 +87,7 @@ capas.
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{llp{2.6cm}p{2.4cm}p{3.4cm}}
+\begin{tabular}{llp{1.6cm}p{2.4cm}p{3.4cm}}
 \toprule
 \textbf{Capa} & \textbf{Modelo} & \textbf{Región} & \textbf{Velocidad} & \textbf{Observación} \\
 \midrule
@@ -163,42 +164,3 @@ procedimiento Simular(escenario, v_cluster, v_nodo, semilla):
     ejecutar hasta T = 200 s
     guardar el XML de FlowMonitor y el resumen de métricas
 \end{verbatim}
-
-\subsection{Diseño experimental}
-\label{sec:diseno-experimento}
-
-Para responder la pregunta se comparan cuatro escenarios de movilidad: E0, sin
-movimiento; E1, con solo movilidad de nodo; E2, con solo movilidad de clúster; y E3, con
-ambas capas. Los escenarios con movimiento se evalúan a 1, 5, 10 y 20\,m/s, y cada
-configuración se repite diez veces con semillas distintas, para un total de 130 corridas.
-De cada corrida se obtienen la tasa de entrega, el retardo, el \emph{throughput} y el
-\emph{jitter} a partir de los flujos de datos registrados por FlowMonitor. El análisis
-compara las medias con intervalos de confianza del 95\,\% y contrasta E2 contra E1
-mediante una prueba $t$ de Welch unilateral.
-
-La comparación entre E1 y E2 es la que responde la pregunta de investigación. Como en
-ambos se mueve una sola capa a la misma velocidad, la diferencia observada en la tasa de
-entrega y en el retardo se puede atribuir al tipo de movilidad y no a un cambio en la
-cantidad de movimiento. El escenario E3, que combina ambas capas, permite comprobar si
-los efectos se acumulan cuando el movimiento ocurre en los dos niveles a la vez.
-
-\subsection{Decisiones de diseño y su justificación}
-\label{sec:diseno-decisiones}
-
-Varias decisiones merecen justificarse explícitamente porque condicionan la
-interpretación de los resultados. Se usaron cuatro clústeres en el nivel inferior, y no
-tres, para que los dos superclústeres quedaran simétricos y los flujos pudieran
-repartirse de forma equilibrada entre tráfico intra e inter-superclúster. Los
-superclústeres se mantienen fijos para que, en cada escenario, se mueva una sola capa a
-la velocidad de estudio; de otro modo no sería posible atribuir el efecto observado a un
-tipo de movilidad concreto. La propagación se modela con un disco de alcance exacto, y
-no con el modelo log-distancia por defecto de ns-3, porque con la potencia y el umbral
-de detección estándar un enlace 802.11b a 1\,Mbps solo alcanza unos 50\,m, insuficiente
-para sostener un \emph{backbone} entre clústeres separados 150\,m; el modelo de disco,
-además, hace que la geometría sea fácil de controlar y de explicar. El tráfico se
-distribuyó en ocho flujos de baja carga, cuatro dentro de cada superclúster y cuatro
-entre superclústeres, para forzar el uso de la jerarquía sin saturar la red. Y se
-descartó ns3-ai porque el problema no requiere aprendizaje ni control adaptativo: la
-medición del efecto de la movilidad sobre AODV se resuelve de forma natural con la
-simulación de eventos discretos de ns-3, y prescindir de capas adicionales reduce el
-riesgo de incompatibilidades y acelera las corridas.

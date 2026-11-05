@@ -5,16 +5,16 @@
 \section{Código fuente}
 \label{sec:codigo-fuente}
 
-El programa de simulación está implementado en C++ sobre ns-3 (versión 3.43), en el archivo \texttt{simulacion/manet-jerarquica.cc}. Esta sección recorre el entorno de software utilizado, la organización del código fuente, la generación de tráfico, la captura de métricas con \texttt{FlowMonitor}, la visualización en NetAnim y la validación sobre el escenario base. El objetivo es que cualquier lector pueda ubicar en el código cada pieza del diseño descrito en la sección~\ref{sec:diseno}.
+El programa de simulación está implementado en C++ sobre ns-3 (versión 3.43), en el archivo \texttt{simulacion/manet-jerarquica.cc}. Esta sección recorre el entorno de software utilizado, la organización del código fuente, la generación de tráfico, la captura de métricas con \texttt{FlowMonitor}, la visualización en NetAnim y la validación sobre el escenario base.
 
 \subsection{Entorno de software y versiones}
 
-El desarrollo y las simulaciones se hicieron en el entorno de la tabla~\ref{tab:versiones-software}, acordado por el equipo para que los scripts y los resultados sean directamente reproducibles. Fijar las versiones no es un detalle menor: un cambio de versión de ns-3 puede alterar el comportamiento de los modelos y, con ello, los resultados.
+El desarrollo y las simulaciones se hicieron en el entorno de la tabla~\ref{tab:versiones-software}, acordado por el equipo para que los scripts y los resultados sean directamente reproducibles.
 
 \begin{table}[h]
 \centering
 \small
-\begin{tabular}{p{4.2cm}p{3.2cm}p{6.8cm}}
+\begin{tabular}{p{3.2cm}p{3.2cm}p{6.2cm}}
 \toprule
 \textbf{Componente} & \textbf{Versión} & \textbf{Observaciones / Rol en el proyecto} \\
 \midrule
@@ -31,7 +31,7 @@ Visualizador gráfico & NetAnim 3.109 & Opcional para inspección visual de topo
 \end{table}
 
 \paragraph{Sobre la biblioteca \texttt{ns3-ai}:}
-Aunque el enunciado menciona \texttt{ns3-ai} como una alternativa deseable, se optó por no utilizarla. El estudio aborda modelos analíticos de movilidad y el comportamiento del protocolo reactivo AODV, fenómenos que el motor de simulación de eventos discretos de ns-3 resuelve de forma nativa en C++. Incorporar \texttt{ns3-ai}, en cambio, exigía capas de sincronización entre procesos mediante memoria compartida y dependencias de Python que complicaban la instalación y aumentaban el tiempo de cómputo, sin aportar al análisis de la movilidad. Mantener la simulación en C++ nativo simplifica el despliegue y asegura reproducibilidad exacta con el generador de números pseudoaleatorios (\texttt{--RngRun}). En pocas palabras, la herramienta se eligió por lo que exige el problema y no por lo que ofrece la librería.
+Aunque el enunciado menciona \texttt{ns3-ai} como una alternativa deseable, se optó por no utilizarla. El estudio aborda modelos analíticos de movilidad y el comportamiento del protocolo reactivo AODV, fenómenos que el motor de simulación de eventos discretos de ns-3 resuelve de forma nativa en C++. Incorporar \texttt{ns3-ai}, en cambio, exigía capas de sincronización entre procesos mediante memoria compartida y dependencias de Python que complicaban la instalación y aumentaban el tiempo de cómputo, sin aportar al análisis de la movilidad. Mantener la simulación en C++ nativo simplifica el despliegue y asegura reproducibilidad exacta con el generador de números pseudoaleatorios (\texttt{--RngRun}).
 
 \subsection{Estructura de \texttt{manet-jerarquica.cc}}
 
@@ -76,7 +76,7 @@ El reporte completo de FlowMonitor se exporta en formato XML en la ruta acordada
 \begin{center}
 \texttt{<outDir>/<scenario>\_cs<clusterSpeed>\_ns<nodeSpeed>\_run<RngRun>.xml}
 \end{center}
-La función auxiliar \texttt{NombreSalida()} centraliza este formato, y \texttt{std::filesystem::create\_directories} asegura que el directorio de salida exista antes de la escritura. Para facilitar la inspección durante las pruebas manuales, el programa imprime además un resumen compacto de las métricas en la terminal. Ese resumen suma todos los flujos que registra FlowMonitor, incluidos los mensajes de control de AODV, por lo que puede diferir ligeramente de las métricas del análisis, que usan solo los ocho flujos de datos.
+La función auxiliar \texttt{NombreSalida()} centraliza este formato, y la función \texttt{create\_\allowbreak{}directories} de la biblioteca \texttt{std::\allowbreak{}filesystem} asegura que el directorio de salida exista antes de la escritura. Para facilitar la inspección durante las pruebas manuales, el programa imprime además un resumen compacto de las métricas en la terminal. Ese resumen suma todos los flujos que registra FlowMonitor, incluidos los mensajes de control de AODV, por lo que puede diferir ligeramente de las métricas del análisis, que usan solo los ocho flujos de datos.
 
 \subsection{Soporte para NetAnim (\texttt{ConfigurarNetAnim})}
 
@@ -88,6 +88,7 @@ A continuación se incluyen los fragmentos centrales de la Parte~3 en \texttt{si
 
 \subsubsection{Configuración de flujos CBR}
 
+{\footnotesize
 \begin{verbatim}
 const std::vector<Flujo> flujos = {
     {0, 1, 1, 1}, // A1 -> B1 (intra X)
@@ -128,9 +129,11 @@ for (uint32_t f = 0; f < flujos.size(); ++f) {
     appTx.Stop(Seconds(fin));
 }
 \end{verbatim}
+}
 
 \subsubsection{Cálculo y guardado de métricas}
 
+{\footnotesize
 \begin{verbatim}
 std::filesystem::create_directories(p.outDir);
 std::string archivo = NombreSalida(p, "");
@@ -150,15 +153,18 @@ for (const auto& [id, st] : g_monitor->GetFlowStats()) {
     }
 }
 \end{verbatim}
+}
 
 \subsection{Validación de integración del programa}
 
-Antes de automatizar los experimentos, conviene comprobar que el sistema completo funciona en el caso más sencillo. Por eso se valida sobre el escenario de control \textbf{E0}, sin movilidad:
+El funcionamiento conjunto del sistema se valida sobre el escenario de control \textbf{E0}, sin movilidad:
 
+{\footnotesize
 \begin{verbatim}
 ./ns3 run "scratch/manet-jerarquica --scenario=E0 --clusterSpeed=0 \
            --nodeSpeed=0 --simTime=200 --RngRun=1 --outDir=resultados/raw"
 \end{verbatim}
+}
 
 En la réplica 1 (\texttt{E0\_cs0\_ns0\_run1.xml}), los ocho flujos transmitieron un total de 5\,901 paquetes de datos y se recibieron exactamente 5\,901, alcanzando una tasa de entrega (PDR) del 100.0\,\%, un retardo promedio de 18.82\,ms y un throughput agregado de 137.80\,kbit/s. A través de las diez réplicas de control ejecutadas por el equipo (\texttt{resultados/resumen.csv}), la PDR media se situó en el 99.97\,\% (con un intervalo de confianza al 95\,\% de $[99.93, 100.01]$\,\%) y el retardo promedio en 20.41\,ms.
 

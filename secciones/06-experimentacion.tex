@@ -9,19 +9,23 @@
 
 \subsection{Escenarios y ejecución}
 
-Esta sección pone a prueba la hipótesis con los datos. Se ejecutaron los cuatro escenarios de la tabla~\ref{tab:escenarios} con los parámetros
+Se ejecutaron los cuatro escenarios de la tabla~\ref{tab:escenarios} con los parámetros
 de la tabla~\ref{tab:parametros}: E0 (sin movilidad), E1 (solo movilidad de nodo), E2
 (solo movilidad de clúster) y E3 (ambas). E1, E2 y E3 se corrieron a las velocidades
 $v \in \{1, 5, 10, 20\}$\,m/s y E0 una sola vez, cada configuración con diez réplicas
 (\texttt{RngRun} $= 1, \dots, 10$): 130 corridas de 200\,s en total, todas completadas
-sin errores y todas con paquetes recibidos. Las corridas se automatizaron con
-\texttt{scripts/correr\_escenarios.sh}, las métricas se extrajeron de los XML de
-FlowMonitor con \texttt{scripts/parse\_flowmon.py} y las tablas y figuras se generaron
-con \texttt{scripts/graficar.py}.
+sin errores y todas con paquetes recibidos. El proceso se automatizó en tres etapas. En
+la primera se recorrieron todas las combinaciones de escenario, velocidad y réplica, y
+cada corrida guardó las estadísticas de FlowMonitor en un archivo XML propio. En la
+segunda se leyeron esos archivos y, para cada corrida, se calcularon la PDR, el retardo
+medio, el \emph{throughput} y el \emph{jitter} con las fórmulas de la
+sección~\ref{sec:pregunta}, y se reunieron en una sola tabla. En la tercera se agruparon
+las réplicas de cada configuración para obtener medias, intervalos de confianza y las
+pruebas de hipótesis, y se generaron las figuras.
 
-Que un programa corra sin errores no garantiza que haga lo que se diseñó. Por eso,
-antes del experimento, el programa se verificó con una batería de 46 pruebas
-automáticas (\texttt{scripts/validar\_movilidad.py}). Las pruebas confirmaron que en E0
+Antes del experimento, el programa se verificó con una batería de 46 pruebas
+automáticas, que corren simulaciones cortas, registran la posición de todos los nodos cada
+0.1\,s y comparan lo observado con lo que exige el diseño. Las pruebas confirmaron que en E0
 ningún nodo se mueve, que en E1 los CH permanecen fijos, que en E2 cada miembro conserva
 exactamente su posición relativa a su CH, que clústeres y nodos no salen de sus regiones
 ($\pm 150$\,m y $\pm 40$\,m), que nunca se supera la velocidad configurada, que la misma
@@ -32,9 +36,7 @@ misma PDR (65.06\,\%) en la validación y en el experimento.
 \textbf{Tratamiento de los datos.} Las métricas se calculan solo sobre los 8 flujos de
 datos (puertos UDP 5000--5007). FlowMonitor registra además los mensajes de control de
 AODV (puerto UDP 654), que se excluyen porque no son tráfico de la aplicación y su
-volumen cambia con la movilidad. Incluirlos sesgaría la comparación entre escenarios,
-porque se estaría midiendo, en parte, el esfuerzo de la red por reorganizarse y no el
-servicio que presta. Los
+volumen cambia con la movilidad. Incluirlos sesgaría la comparación entre escenarios. Los
 intervalos de confianza del 95\,\% usan la distribución $t$ de Student con $n - 1 = 9$
 grados de libertad (sección~\ref{sec:analisis-est}).
 
@@ -116,16 +118,13 @@ backbone no cambian y el miembro casi siempre tiene un enlace directo con su CH.
 pérdidas que aparecen (algunas réplicas bajan hasta 78.8\,\%) se deben a rutas locales
 de AODV que pasan por otro miembro y se rompen cuando este se aleja.
 
-\textbf{E2 (solo clústeres).} El panorama cambia por completo cuando se mueven los
-clústeres. La movilidad de clúster produce la mayor degradación: la
+\textbf{E2 (solo clústeres).} La movilidad de clúster produce la mayor degradación: la
 PDR cae a entre 70\,\% y 80\,\% y el retardo crece de 25\,ms a 94\,ms al pasar de 1 a
 20\,m/s. Al desplazarse hasta $\pm 150$\,m de su superclúster, dos CH pueden quedar a
 más de 250\,m y el backbone se fragmenta: los paquetes entre clústeres se pierden o
 esperan en cola mientras AODV busca una ruta nueva. Esa actividad de reparación se
 refleja en el número de flujos de control de AODV que registra FlowMonitor, que sube de
-17 en E0 a 21 a 1\,m/s y a 55 a 20\,m/s, mientras que en E1 se mantiene en 18--19. La
-red, en otras palabras, dedica cada vez más esfuerzo a reconstruir rutas y entrega cada
-vez menos.
+17 en E0 a 21 a 1\,m/s y a 55 a 20\,m/s, mientras que en E1 se mantiene en 18--19.
 
 \textbf{E3 (ambas).} El escenario combinado se comporta como E2: sus medias de PDR
 (71.8\,\%--83.1\,\%) y de retardo (20\,ms--101\,ms) no difieren significativamente de las

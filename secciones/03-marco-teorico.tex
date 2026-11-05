@@ -8,9 +8,7 @@
 Esta sección reúne los conceptos en los que se apoya el resto del trabajo: qué es una
 red móvil \emph{ad hoc}, cómo se organiza en clústeres, cómo se modela el movimiento de
 los clústeres y de los nodos, cómo encuentra rutas AODV, con qué métricas se mide el
-desempeño, cómo se simula todo esto en ns-3 y cómo se analizan los resultados. Cada
-apartado responde a una pieza del experimento, de modo que el lector pueda seguir más
-adelante por qué se tomó cada decisión de diseño.
+desempeño, cómo se simula todo esto en ns-3 y cómo se analizan los resultados.
 
 \subsection{Redes móviles \emph{ad hoc} (MANET)}
 \label{sec:marco-manet}
@@ -73,8 +71,7 @@ un modelo estocástico y la simulación en ns-3 como experimento.
 Un modelo de movilidad describe cómo cambian en el tiempo la posición, la velocidad y
 la dirección de los nodos. Los resultados de una simulación de MANET dependen mucho del
 modelo elegido, así que este debe parecerse al comportamiento que se quiere estudiar
-\cite{camp2002survey}: un modelo poco realista puede llevar a conclusiones que no se
-sostienen fuera del simulador. Los modelos se dividen en modelos de entidad, en los que cada
+\cite{camp2002survey}. Los modelos se dividen en modelos de entidad, en los que cada
 nodo se mueve de forma independiente, y modelos de grupo, en los que el movimiento de
 un nodo depende del de su grupo \cite{camp2002survey}.
 
@@ -143,9 +140,7 @@ periódicos, como OLSR \cite{clausen2003olsr}; los reactivos buscan una ruta sol
 hay datos que enviar, y los híbridos combinan ambos enfoques
 \cite{barbeau2007principles}. Los proactivos tienen las rutas listas de inmediato, pero
 gastan ancho de banda aunque no haya tráfico; los reactivos ahorran ese tráfico de
-control, pero agregan una demora mientras descubren la ruta. Ninguno es mejor en
-términos absolutos: la elección depende de cuánto cambia la red y de cuánto tráfico
-transporta.
+control, pero agregan una demora mientras descubren la ruta.
 
 AODV (\emph{Ad hoc On-Demand Distance Vector}) es un protocolo reactivo
 \cite{rfc3561aodv}. Cuando un nodo necesita una ruta, difunde una solicitud de ruta

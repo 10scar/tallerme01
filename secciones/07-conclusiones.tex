@@ -15,9 +15,7 @@ continuación.
     el desempeño mucho más que la movilidad a nivel de nodo. A igual velocidad, el
     escenario con solo movilidad de clúster (E2) entrega entre 16 y 27 puntos
     porcentuales menos paquetes que el escenario con solo movilidad de nodo (E1), y su
-    retardo es entre 1.3 y 4.8 veces mayor. Mover el grupo completo resulta, en
-    otras palabras, mucho más dañino que dejar que cada integrante se mueva por su
-    cuenta.
+    retardo es entre 1.3 y 4.8 veces mayor.
 
     \item \textbf{Se acepta la hipótesis principal.} La prueba $t$ de Welch unilateral
     rechaza $H_0$ para la PDR en las cuatro velocidades ($p \leq 0.002$) y para el
@@ -36,8 +34,7 @@ continuación.
     \item \textbf{La movilidad de clúster domina el efecto combinado (HS2).} El escenario
     con ambas movilidades (E3) no es significativamente distinto de E2 en ninguna
     velocidad: la degradación no se suma, sino que la determina el nivel superior de la
-    jerarquía. Una vez que el backbone se rompe, el movimiento adicional de los nodos
-    apenas cambia el resultado.
+    jerarquía.
 
     \item \textbf{La brecha entre ambos tipos de movilidad crece con la velocidad (HS3).}
     La diferencia de retardo entre E2 y E1 crece de forma monótona (de 6\,ms a 74\,ms) y
@@ -54,8 +51,7 @@ continuación.
 
 \subsection{Limitaciones del estudio}
 
-Los resultados anteriores son sólidos dentro del escenario simulado, pero ese escenario
-tiene límites que conviene hacer explícitos antes de extrapolarlos:
+El estudio tiene las siguientes limitaciones:
 
 \begin{itemize}
     \item \textbf{Velocidad efectiva de Random Waypoint.} Los clústeres hacen una pausa
@@ -90,7 +86,7 @@ tiene límites que conviene hacer explícitos antes de extrapolarlos:
 
 \subsection{Trabajo futuro}
 
-Cada una de estas limitaciones sugiere, a su vez, una línea para continuar el estudio:
+Se proponen las siguientes líneas de trabajo:
 
 \begin{itemize}
     \item Usar modelos de movilidad sin el sesgo de velocidad de Random Waypoint, como

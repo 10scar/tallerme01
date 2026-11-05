@@ -14,10 +14,8 @@ infraestructura no existe o no alcanza, como en zonas rurales sin cobertura o en
 multitudinarios. En ella cada nodo cumple un doble papel: es terminal y, a la vez,
 enrutador, de modo que reenvía los paquetes de otros nodos para que la información llegue
 a destinos situados fuera de su alcance directo \cite{sarkar2013adhoc,zarate2021wireless}.
-Esta independencia tiene un costo, dado que los nodos se mueven: la topología de la red
-cambia continuamente, los enlaces aparecen y desaparecen, y las rutas deben descubrirse y
-repararse sobre la marcha. Dicho de otro modo, la red no es una estructura estática, sino
-una que se reorganiza mientras transmite.
+Como los nodos se mueven, la topología de la red cambia continuamente, los enlaces aparecen y desaparecen, y las rutas deben descubrirse y
+repararse sobre la marcha.
 
 A medida que crece el número de nodos, una organización plana deja de escalar. En
 protocolos reactivos como AODV \cite{rfc3561aodv}, cada descubrimiento de ruta inunda la
@@ -28,13 +26,11 @@ forman a su vez un nivel superior (\emph{backbone}) por el que viaja la comunica
 clústeres. Ospina y Ortiz \cite{ospina2017growth} estudiaron, con simulaciones en ns-3,
 las condiciones bajo las cuales estas arquitecturas de dos y tres capas son escalables, y
 mostraron que la relación de recursos entre capas sucesivas puede describirse con un
-factor de crecimiento. La jerarquía, en suma, ordena la red, pero también introduce
-enlaces de los que depende buena parte del tráfico.
+factor de crecimiento.
 
 \subsection{El problema: dos niveles de movilidad}
 
-En una MANET jerárquica la movilidad no ocurre de una sola forma, sino en dos niveles
-distintos:
+En una MANET jerárquica la movilidad ocurre en dos niveles distintos:
 
 \begin{itemize}
     \item \textbf{Movilidad de clúster:} el grupo completo se desplaza como un todo.
@@ -54,8 +50,7 @@ cambia muchos enlaces, pero todos son \emph{locales}: rutas cortas dentro de un 
 clúster, que AODV repara con poco costo. La movilidad de clúster, por el contrario,
 cambia pocos enlaces, pero son los enlaces \emph{críticos} entre los CH, por donde pasa
 todo el tráfico que cruza la jerarquía; cuando uno de ellos se rompe, se interrumpen todos
-los flujos entre clústeres que dependían de él. Se trata, entonces, de muchos daños
-pequeños frente a pocos daños graves, y no es evidente cuál de los dos efectos domina ni
+los flujos entre clústeres que dependían de él. No es evidente cuál de los dos efectos domina ni
 cómo cambia esa relación al aumentar la velocidad.
 
 El problema que aborda este trabajo es, por tanto, \textbf{cuantificar y comparar,
@@ -65,8 +60,7 @@ primer nivel y dos superclústeres en el segundo), con enrutamiento AODV.
 
 \subsection{Justificación}
 
-La pregunta no es solo de interés académico; responderla tiene consecuencias en al menos
-cuatro frentes:
+Responder esta pregunta es relevante por cuatro razones:
 
 \begin{itemize}
     \item \textbf{Diseño de redes jerárquicas.} Saber qué tipo de movilidad degrada más
@@ -83,8 +77,7 @@ cuatro frentes:
     controlar en el mundo real—, mantener constantes las demás variables y repetir cada
     experimento con distintas semillas aleatorias.
     \item \textbf{Relación con el curso.} La movilidad es un proceso estocástico, y cada
-    corrida de la simulación es una realización de ese proceso. Por eso las conclusiones
-    no se apoyan en una sola corrida, sino en réplicas independientes, estimadores e
+    corrida de la simulación es una realización de ese proceso. Por eso las conclusiones se obtienen con réplicas independientes, estimadores e
     intervalos de confianza, como se describe en la sección~\ref{sec:pregunta}.
 \end{itemize}
 
@@ -94,6 +87,4 @@ El estudio incluye una jerarquía fija de 20 nodos (cuatro clústeres de cinco n
 CH predefinido y dos superclústeres), el protocolo AODV, tráfico UDP de tasa constante
 y cuatro escenarios de movilidad evaluados a cuatro velocidades. Quedan fuera del
 alcance la reelección dinámica de CH, la comparación entre protocolos de enrutamiento,
-el consumo de energía y el uso de la librería ns3-ai. Estos aspectos no se descartan por
-falta de interés, sino para mantener el experimento acotado, y se proponen como trabajo
-futuro.
+el consumo de energía y el uso de la librería ns3-ai. Estos aspectos se proponen como trabajo futuro.
