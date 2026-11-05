@@ -5,11 +5,11 @@
 \section{Código fuente}
 \label{sec:codigo-fuente}
 
-En esta sección se detalla la estructura del programa de simulación desarrollado en C++ para ns-3, las versiones de software empleadas, los mecanismos de generación de tráfico, la instrumentación de métricas con \texttt{FlowMonitor}, la visualización topológica en NetAnim y las validaciones de integración efectuadas.
+El programa de simulación está implementado en C++ sobre ns-3 (versión 3.43) en el archivo \texttt{simulacion/manet-jerarquica.cc}. En esta sección se describen el entorno de software utilizado, la organización del código fuente, la generación de tráfico, la captura de métricas con \texttt{FlowMonitor}, la visualización en NetAnim y la validación sobre el escenario base.
 
-\subsection{Entorno de ejecución y versiones de software}
+\subsection{Entorno de software y versiones}
 
-Para garantizar la reproducibilidad de los experimentos y la consistencia en el trabajo colaborativo del grupo, todo el desarrollo y las pruebas se estandarizaron sobre el entorno descrito en la tabla~\ref{tab:versiones-software}.
+El desarrollo y las simulaciones se estandarizaron en el entorno descrito en la tabla~\ref{tab:versiones-software}, correspondiente a la configuración acordada por el equipo para asegurar que los scripts y resultados sean directamente reproducibles.
 
 \begin{table}[h]
 \centering
@@ -18,136 +18,77 @@ Para garantizar la reproducibilidad de los experimentos y la consistencia en el 
 \toprule
 \textbf{Componente} & \textbf{Versión} & \textbf{Observaciones / Rol en el proyecto} \\
 \midrule
-Simulador & ns-3.43 & Versión acordada por el grupo, alineada con las guías del curso. \\
-Sistema operativo de referencia & Ubuntu 22.04 LTS & Entorno con el que se documentó la instalación; el código también puede ejecutarse en Windows nativo u otras distribuciones de Linux. \\
+Simulador & ns-3.43 & Versión acordada por el grupo, siguiendo las guías del curso. \\
+Sistema operativo de referencia & Ubuntu 22.04 LTS & Entorno documentado en el plan; nativo o bajo WSL2 en Windows. \\
 Compilador C++ & GCC / g++ 11.4.0 & Estándar ISO C++17 activado por defecto. \\
-Gestor de compilación & CMake 3.22.1 / Ninja & Invocado a través del script integrador \texttt{./ns3}. \\
+Gestor de compilación & CMake 3.22.1 / Ninja & Invocado a través del script \texttt{./ns3}. \\
 Lenguaje de análisis & Python 3.10+ & Bibliotecas \texttt{pandas}, \texttt{matplotlib} y \texttt{scipy} (fases 4 y 7). \\
-Visualizador gráfico & NetAnim 3.109 & Opcional para inspección visual de trayectorias. \\
+Visualizador gráfico & NetAnim 3.109 & Opcional para inspección visual de topología y trayectorias. \\
 \bottomrule
 \end{tabular}
 \caption{Plataforma y versiones de software utilizadas en la implementación.}
 \label{tab:versiones-software}
 \end{table}
 
-\paragraph{Decisión técnica sobre \texttt{ns3-ai}:}
-En el enunciado del taller se menciona la biblioteca \texttt{ns3-ai} como un componente deseable mas no obligatorio. Tras analizar los requerimientos de la investigación, decidimos no incorporarla. El objetivo del estudio radica en medir el impacto de modelos de movilidad estocásticos sobre el enrutamiento AODV en una topología jerárquica. Esto corresponde enteramente al paradigma de simulación de eventos discretos que ns-3 resuelve de forma nativa en C++. Incorporar \texttt{ns3-ai} habría introducido capas adicionales de sincronización inter-proceso (IPC) mediante memoria compartida y dependencias complejas de Python que no aportan funcionalidad a la formulación del problema, pero sí incrementan los tiempos de simulación y el riesgo de incompatibilidades de compilación en los equipos del grupo. Mantener el programa en C++ puro garantiza máxima velocidad de ejecución y reproducibilidad rigurosa mediante la semilla del generador pseudoaleatorio (\texttt{RngRun}).
+\paragraph{Sobre la biblioteca \texttt{ns3-ai}:}
+Aunque el enunciado menciona \texttt{ns3-ai} como una alternativa deseable, se optó por no utilizarla. El estudio aborda modelos analíticos de movilidad y el comportamiento del protocolo reactivo AODV, fenómenos que el motor de simulación de eventos discretos de ns-3 resuelve de forma nativa en C++. Incorporar \texttt{ns3-ai} requería capas de sincronización inter-proceso mediante memoria compartida y dependencias de Python que complicaban la instalación y aumentaban el tiempo de cómputo sin aportar al análisis de movilidad. Mantener la simulación en C++ nativo asegura simplicidad en el despliegue y reproducibilidad exacta con el generador de números pseudoaleatorios (\texttt{--RngRun}).
 
-\subsection{Organización del script \texttt{manet-jerarquica.cc}}
+\subsection{Estructura de \texttt{manet-jerarquica.cc}}
 
-El archivo fuente principal se encuentra en \texttt{simulacion/manet-jerarquica.cc} y está concebido para compilarse ubicándose en el directorio \texttt{scratch/} del simulador. La estructura del programa se diseñó de manera desacoplada para permitir que cada integrante pudiera trabajar sobre su módulo respectivo sin colisionar en Git:
+El script está organizado de manera modular para desacoplar el trabajo de los integrantes y evitar dependencias cruzadas en el código:
 
 \begin{itemize}
-    \item \textbf{Estructura \texttt{Parametros}:} Reúne todas las variables configurables por línea de comandos mediante la clase \texttt{CommandLine} de ns-3 (nombre del escenario, velocidades de clúster y nodo, semilla aleatoria \texttt{RngRun}, directorio de salida \texttt{outDir}, parámetros de radio, etc.).
-    \item \textbf{Estructura \texttt{RedJerarquica}:} Funciona como la interfaz de datos compartida entre fases. Almacena los contenedores \texttt{NodeContainer} organizados por jerarquía (nodos totales, clústeres individuales, superclústeres, lista de \emph{Cluster Heads} y lista de miembros), así como los contenedores de interfaces IP (\texttt{Ipv4InterfaceContainer}) de cada subred.
-    \item \textbf{Funciones de red y topología (\texttt{CrearNodos}, \texttt{ConfigurarRed}):} Responsabilidad de la Parte 1. Instancian los 20 nodos, configuran el modelo de propagación por alcance (disco cerrado) y configuran la pila IP con AODV asignando las subredes de clúster (\texttt{10.1.1.0/24} a \texttt{10.1.4.0/24}) y la subred backbone (\texttt{10.2.0.0/24}).
-    \item \textbf{Función de movilidad (\texttt{ConfigurarMovilidad}):} Responsabilidad de la Parte 2. Configura los modelos jerárquicos anidados de movilidad relativa.
-    \item \textbf{Funciones de tráfico y métricas (\texttt{ConfigurarTrafico}, \texttt{ConfigurarMetricas}, \texttt{GuardarMetricas}, \texttt{ConfigurarNetAnim}):} Responsabilidad de la Parte 3 (Stephan García). Implementan la inyección de flujos UDP, la captura de paquetes mediante \texttt{FlowMonitor}, la exportación estandarizada en formato XML y la traza para NetAnim.
+    \item \texttt{struct Parametros}: agrupa las opciones configurables desde la línea de comandos mediante la clase \texttt{CommandLine} de ns-3 (escenario, velocidades, tiempos, alcances de radio y ruta de salida).
+    \item \texttt{struct RedJerarquica}: estructura de datos compartida que almacena los \texttt{NodeContainer} organizados por niveles (todos los nodos, clústeres A--D, superclústeres X e Y, lista de Cluster Heads y miembros), así como los contenedores de interfaces IP correspondientes.
+    \item \textbf{Red y direccionamiento} (\texttt{CrearNodos}, \texttt{ConfigurarRed}): responsabilidad de la Parte~1. Instancia los 20 nodos, configura canales WiFi independientes por clúster con modelo de disco (\texttt{RangePropagationLossModel}), canal compartido para el backbone entre CH, y asigna la pila de red con AODV y direccionamiento por subredes.
+    \item \textbf{Movilidad jerárquica} (\texttt{ConfigurarMovilidad}): responsabilidad de la Parte~2. Conecta las tres capas relativas de movimiento mediante modelos anidados.
+    \item \textbf{Tráfico y métricas} (\texttt{ConfigurarTrafico}, \texttt{ConfigurarMetricas}, \texttt{GuardarMetricas}, \texttt{ConfigurarNetAnim}): responsabilidad de la Parte~3. Inyecta los flujos de prueba, instala FlowMonitor, serializa los archivos XML e imprime el resumen en consola.
 \end{itemize}
 
-\subsection{Inyección de tráfico sintético (\texttt{ConfigurarTrafico})}
+El punto de entrada (\texttt{main}) orquesta las etapas en secuencia: procesa parámetros, crea la topología, aplica movilidad, instala tráfico y monitores, ejecuta el simulador y exporta las métricas al finalizar.
 
-El tráfico sintético se configuró para poner a prueba de forma equilibrada tanto los enlaces locales como la columna vertebral de la red jerárquica. Se definieron ocho flujos de datos unidireccionales utilizando la aplicación \texttt{OnOffApplication} en protocolo UDP.
+\subsection{Generación de tráfico sintético (\texttt{ConfigurarTrafico})}
 
-\subsubsection{Matriz de flujos de comunicación}
+Para someter a prueba la jerarquía completa de la red, se definen ocho flujos UDP constantes (CBR) mediante aplicaciones \texttt{OnOffApplication}. Los flujos se establecen estrictamente entre nodos miembros de clústeres diferentes, combinando comunicación local al superclúster y comunicación que cruza entre superclústeres:
 
-Para forzar a que todos los paquetes utilicen la jerarquía de la red, los flujos se establecen estrictamente entre miembros ubicados en clústeres distintos. Además, se distribuyen entre flujos internos al superclúster (tráfico de media distancia) y flujos que cruzan entre superclústeres (tráfico de larga distancia):
-
-\begin{enumerate}
-    \item \textbf{Tráfico intra-superclúster (Superclúster X = \{A, B\} y Superclúster Y = \{C, D\}):}
-    \begin{itemize}
-        \item Flujo 0: Miembro 1 de A $\rightarrow$ Miembro 1 de B (puerto 5000).
-        \item Flujo 1: Miembro 1 de B $\rightarrow$ Miembro 1 de A (puerto 5001).
-        \item Flujo 2: Miembro 1 de C $\rightarrow$ Miembro 1 de D (puerto 5002).
-        \item Flujo 3: Miembro 1 de D $\rightarrow$ Miembro 1 de C (puerto 5003).
-    \end{itemize}
-    \item \textbf{Tráfico inter-superclúster (comunicación cruzada X $\leftrightarrow$ Y):}
-    \begin{itemize}
-        \item Flujo 4: Miembro 2 de A $\rightarrow$ Miembro 2 de C (puerto 5004).
-        \item Flujo 5: Miembro 2 de B $\rightarrow$ Miembro 2 de D (puerto 5005).
-        \item Flujo 6: Miembro 2 de C $\rightarrow$ Miembro 2 de A (puerto 5006).
-        \item Flujo 7: Miembro 2 de D $\rightarrow$ Miembro 2 de B (puerto 5007).
-    \end{itemize}
-\end{enumerate}
-
-\paragraph{Aislamiento de los Cluster Heads:}
-Obsérvese que todos los emisores y receptores son nodos miembros (índice 1 para tráfico intra-superclúster e índice 2 para tráfico inter-superclúster). Los nodos de índice 0 corresponden a los \emph{Cluster Heads} (CH). Los CH se excluyen deliberadamente de ser generadores o receptores directos de tráfico útil; su rol en la arquitectura debe permanecer como enrutadores intermedios puros de la capa superior. Cargar los CH con aplicaciones emisoras distorsionaría las mediciones al generar contención local en las colas de la interfaz backbone.
-
-\subsubsection{Régimen de tráfico CBR y control temporal}
-
-Cada flujo emite paquetes con las siguientes especificaciones:
 \begin{itemize}
-    \item \textbf{Tamaño del paquete:} 512 bytes de carga útil.
-    \item \textbf{Frecuencia de emisión:} 4 paquetes por segundo, lo que equivale exactamente a una tasa de bits constante de:
-    \begin{equation}
-        \text{Tasa de datos} = 512\text{ bytes} \times 8\frac{\text{bits}}{\text{byte}} \times 4\frac{\text{paquetes}}{\text{s}} = 16\,384\text{ bps} \quad (16\text{ kbps}).
-    \end{equation}
-    \item \textbf{Modo continuo (CBR):} Se configura \texttt{OnTime} como variable constante de 1.0 y \texttt{OffTime} como constante de 0.0. De este modo, la aplicación permanece indefinidamente en estado activo, transmitiendo a intervalos uniformes de 250 ms.
-    \item \textbf{Desfase inicial de arranque:} En lugar de iniciar los 8 flujos exactamente en el segundo $t = 0$, se utiliza un generador pseudoaleatorio uniforme (\texttt{UniformRandomVariable}) acotado en $[10.0, 11.0]$ segundos. Este retraso de 10 segundos es indispensable en simulaciones de redes ad hoc con AODV: permite que los nodos se inicialicen, que los módulos MAC concluyan su sincronización y que la tabla de rutas no sufra un colapso inicial por una tormenta de solicitudes RREQ concurrentes al inicio de la simulación.
-    \item \textbf{Cese de transmisión:} Los generadores se detienen a los $t = 195.0$ segundos (para simulaciones estándar de 200 s). Este margen final de 5 segundos otorga el tiempo necesario para que los paquetes en vuelo o en colas de reintento de AODV alcancen su destino antes de cerrar los monitores de métricas.
+    \item \textbf{Flujos intra-superclúster (miembros 1):} $A1 \leftrightarrow B1$ dentro del superclúster X, y $C1 \leftrightarrow D1$ dentro del superclúster Y (puertos 5000 a 5003).
+    \item \textbf{Flujos inter-superclúster (miembros 2):} $A2 \rightarrow C2$, $B2 \rightarrow D2$, $C2 \rightarrow A2$ y $D2 \rightarrow B2$, cruzando la frontera entre X e Y (puertos 5004 a 5007).
 \end{itemize}
 
-\subsection{Captura de métricas con \texttt{FlowMonitor}}
+Todos los generadores y receptores residen en nodos miembros. Los Cluster Heads (nodo 0 de cada clúster) no emiten ni reciben tráfico de usuario; actúan exclusivamente como enrutadores intermedios en el backbone. Esto evita que el tráfico propio compita con el tráfico de tránsito en las colas del CH, preservando la fidelidad de la medición.
 
-Para recopilar los datos experimentales sin penalizar el rendimiento del simulador, se integró el módulo \texttt{FlowMonitor} de ns-3 (\texttt{g\_flowHelper.InstallAll()}). A diferencia del registro exhaustivo en trazas PCAP (que para 130 corridas de 200 segundos generaría gigabytes de archivos de texto), \texttt{FlowMonitor} contabiliza estadísticas directamente en memoria por cada flujo IPv4 identificado por su tupla de 5 elementos (dirección origen, dirección destino, puerto origen, puerto destino y protocolo).
+Cada flujo emite paquetes de 512 bytes a 4 paquetes por segundo, lo que equivale a una tasa fija de 16\,384 bit/s (16 kbit/s). La aplicación se configura con \texttt{OnTime} constante de 1.0 y \texttt{OffTime} en 0.0, garantizando una emisión continua y periódica. Para evitar que todos los flujos comiencen exactamente en $t = 0$ y saturen el medio con solicitudes de ruta simultáneas, el inicio de cada flujo se desfasa con una variable uniforme en el intervalo $[10.0, 11.0]$ segundos. Esta ventana inicial de 10 segundos permite que los módulos inalámbricos se sincronicen y que AODV descubra rutas de forma ordenada. La transmisión se detiene a los 195 segundos, dando un margen de 5 segundos para que los paquetes en vuelo o en búferes de reintento lleguen a su destino antes del fin de la simulación.
 
-\subsubsection{Cálculo de métricas globales}
+\subsection{Recolección y reporte de métricas (\texttt{FlowMonitor})}
 
-Al finalizar la simulación, en \texttt{GuardarMetricas()}, el programa recorre las estadísticas acumuladas para todos los flujos activos y calcula:
+En lugar de generar trazas completas de paquetes (PCAP o ASCII), que para 130 ejecuciones producirían un volumen excesivo de datos, se emplea el módulo \texttt{FlowMonitor} de ns-3. Este componente monitorea en memoria cada flujo IPv4 identificado por su tupla de cinco elementos (origen, destino, puertos y protocolo).
 
-\begin{enumerate}
-    \item \textbf{Tasa de entrega de paquetes (PDR, \emph{Packet Delivery Ratio}):}
-    Relación porcentual entre los paquetes recibidos con éxito en las aplicaciones destino y el total de paquetes transmitidos:
-    \begin{equation}
-        \text{PDR} = \frac{\sum_{i=1}^{N_f} \text{rxPackets}_i}{\sum_{i=1}^{N_f} \text{txPackets}_i} \times 100\,\%.
-    \end{equation}
-    \item \textbf{Retardo extremo a extremo promedio ($\bar{D}$):}
-    Suma acumulada de los tiempos de tránsito extremo a extremo de todos los paquetes recibidos, dividida entre el número de paquetes recibidos:
-    \begin{equation}
-        \bar{D} = \frac{\sum_{i=1}^{N_f} \text{delaySum}_i}{\sum_{i=1}^{N_f} \text{rxPackets}_i} \quad [\text{s}].
-    \end{equation}
-    \item \textbf{Rendimiento agregado (\emph{Throughput}):}
-    Volumen total de bits recibidos en la capa de aplicación durante la ventana activa efectiva de tráfico ($T_{\text{activo}} \approx 195.0 - 10.5 = 184.5$ s):
-    \begin{equation}
-        \text{Throughput} = \frac{8 \times \sum_{i=1}^{N_f} \text{rxBytes}_i}{T_{\text{activo}} \times 1000} \quad [\text{kbps}].
-    \end{equation}
-    \item \textbf{Variación de retardo promedio (\emph{Jitter medio}, $\bar{J}$):}
-    Calculado a partir de la suma de diferencias de retardo entre paquetes consecutivos recibidos:
-    \begin{equation}
-        \bar{J} = \frac{\sum_{i=1}^{N_f} \text{jitterSum}_i}{\sum_{i=1}^{N_f} (\text{rxPackets}_i - 1)} \quad [\text{s}].
-    \end{equation}
-\end{enumerate}
+Al concluir la simulación, \texttt{GuardarMetricas()} procesa las estadísticas agregadas de todos los flujos y calcula las métricas del experimento:
+\begin{itemize}
+    \item \textbf{Tasa de entrega (PDR):} porcentaje de paquetes recibidos respecto a los transmitidos ($\text{PDR} = 100 \cdot \sum \text{rxPackets} / \sum \text{txPackets}$).
+    \item \textbf{Retardo promedio extremo a extremo:} cociente entre la suma de retardos de paquetes recibidos y el total de paquetes recibidos ($\sum \text{delaySum} / \sum \text{rxPackets}$).
+    \item \textbf{Throughput agregado:} tasa en kbit/s calculada a partir de los bytes recibidos sobre la ventana activa de tráfico ($8 \cdot \sum \text{rxBytes} / (T_{\text{activo}} \cdot 1000)$).
+    \item \textbf{Jitter medio:} variación promedio del retardo entre paquetes consecutivos recibidos ($\sum \text{jitterSum} / \sum (\text{rxPackets} - 1)$).
+\end{itemize}
 
-\subsubsection{Serialización XML y contrato con la Parte 4}
-
-El programa serializa la salida completa de FlowMonitor invocando:
-\begin{center}
-\texttt{g\_monitor->SerializeToXmlFile(archivo, true, true);}
-\end{center}
-con el formato estricto de nomenclatura acordado en la sección 2.5 del proyecto:
+El reporte completo de FlowMonitor se exporta en formato XML en la ruta acordada:
 \begin{center}
 \texttt{<outDir>/<scenario>\_cs<clusterSpeed>\_ns<nodeSpeed>\_run<RngRun>.xml}
 \end{center}
-Asimismo, la función verifica y crea de forma automática el directorio de destino (\texttt{p.outDir}) mediante \texttt{std::filesystem::create\_directories}, evitando fallos de escritura en ejecuciones por lotes. Adicionalmente, imprime por consola un reporte sintético inmediato para facilitar la supervisión del experimentador.
+La función auxiliar \texttt{NombreSalida()} centraliza este formato, y se emplea \texttt{std::filesystem::create\_directories} para asegurar que el directorio de salida exista antes de la escritura. Para facilitar la inspección durante pruebas manuales, el programa imprime adicionalmente un resumen compacto en la terminal con las métricas calculadas.
 
-\subsection{Visualización y validación con NetAnim}
+\subsection{Soporte para NetAnim (\texttt{ConfigurarNetAnim})}
 
-Mediante el argumento de línea de comandos \texttt{--netanim=true}, la función \texttt{ConfigurarNetAnim} genera una traza XML compatible con la herramienta visualizadora NetAnim. En ella se asignan atributos visuales diferenciados a los nodos:
-\begin{itemize}
-    \item \textbf{Cluster Heads (CH):} Se colorean en rojo intenso (RGB: 220, 20, 60) con un radio ampliado de 6.0 unidades y una etiqueta descriptiva en pantalla (por ejemplo, \texttt{A0 [CH]}).
-    \item \textbf{Miembros ordinarios:} Se representan en color azul (RGB: 30, 144, 255) con un tamaño de 3.5 unidades y etiqueta ordinal (\texttt{A1}, \texttt{A2}, etc.).
-\end{itemize}
-
-Esta diferenciación visual permitió comprobar gráficamente durante el desarrollo que los miembros del clúster se mantienen dentro del radio de cobertura asignado respecto al CH central y que la jerarquía espacial se preserva a lo largo del tiempo.
+Cuando se especifica el argumento \texttt{--netanim=true}, el programa genera un archivo de animación XML en el directorio de salida. Para distinguir visualmente los roles de la topología en NetAnim, los Cluster Heads se configuran en color rojo con un tamaño ampliado (radio 6.0) y etiqueta \texttt{[CH]}, mientras que los nodos miembros se dibujan en color azul y tamaño estándar (radio 3.5). Esta diferenciación permite verificar de forma visual la coherencia espacial de los clústeres y el movimiento relativo durante la depuración.
 
 \subsection{Fragmentos clave de la implementación}
 
-A continuación se presentan los fragmentos esenciales implementados en \texttt{simulacion/manet-jerarquica.cc}.
+A continuación se incluyen los fragmentos centrales de la Parte~3 en \texttt{simulacion/manet-jerarquica.cc}.
 
-\subsubsection{Definición y configuración del tráfico UDP}
+\subsubsection{Configuración de flujos CBR}
 
 \begin{verbatim}
-// Matriz de flujos: intra-superclúster (miembro 1) e inter-superclúster (miembro 2)
 const std::vector<Flujo> flujos = {
     {0, 1, 1, 1}, // A1 -> B1 (intra X)
     {1, 1, 0, 1}, // B1 -> A1 (intra X)
@@ -159,73 +100,66 @@ const std::vector<Flujo> flujos = {
     {3, 2, 1, 2}  // D2 -> B2 (inter X-Y)
 };
 
-// Generador de arranque uniforme [10.0, 11.0] s
 Ptr<UniformRandomVariable> inicio = CreateObject<UniformRandomVariable>();
-inicio->SetAttribute("Min", DoubleValue(10.0));
-inicio->SetAttribute("Max", DoubleValue(11.0));
+inicio->SetAttribute("Min", DoubleValue(INICIO_TRAFICO_MIN));
+inicio->SetAttribute("Max", DoubleValue(INICIO_TRAFICO_MAX));
 
-for (size_t i = 0; i < flujos.size(); ++i) {
-    const auto& f = flujos[i];
-    uint16_t puerto = 5000 + static_cast<uint16_t>(i);
-    Ptr<Node> nodoSrc = red.clusters[f.cSrc].Get(f.mSrc);
-    Ptr<Node> nodoDst = red.clusters[f.cDst].Get(f.mDst);
-    Ipv4Address ipDst = red.ifCluster[f.cDst].GetAddress(f.mDst);
+for (uint32_t f = 0; f < flujos.size(); ++f) {
+    const Flujo& fl = flujos[f];
+    uint16_t puerto = puertoBase + f;
+    Ipv4Address ipDestino = red.ifCluster[fl.clusterDestino].GetAddress(fl.miembroDestino);
 
-    // Sumidero (PacketSink) en el nodo receptor
-    PacketSinkHelper sink("ns3::UdpSocketFactory",
-                          InetSocketAddress(Ipv4Address::GetAny(), puerto));
-    ApplicationContainer appSink = sink.Install(nodoDst);
-    appSink.Start(Seconds(0.0));
-    appSink.Stop(Seconds(p.simTime));
+    PacketSinkHelper sumidero("ns3::UdpSocketFactory",
+                              InetSocketAddress(Ipv4Address::GetAny(), puerto));
+    ApplicationContainer appRx =
+        sumidero.Install(red.clusters[fl.clusterDestino].Get(fl.miembroDestino));
+    appRx.Start(Seconds(0.0));
+    appRx.Stop(Seconds(p.simTime));
 
-    // Generador OnOff en modo CBR (512 B, 16384 bps continuo)
-    OnOffHelper onoff("ns3::UdpSocketFactory", InetSocketAddress(ipDst, puerto));
-    onoff.SetAttribute("PacketSize", UintegerValue(512));
-    onoff.SetAttribute("DataRate", DataRateValue(DataRate("16384bps")));
-    onoff.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1.0]"));
-    onoff.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0.0]"));
+    OnOffHelper emisor("ns3::UdpSocketFactory", InetSocketAddress(ipDestino, puerto));
+    emisor.SetAttribute("PacketSize", UintegerValue(512));
+    emisor.SetAttribute("DataRate", DataRateValue(DataRate("16384bps")));
+    emisor.SetAttribute("OnTime", StringValue("ns3::ConstantRandomVariable[Constant=1]"));
+    emisor.SetAttribute("OffTime", StringValue("ns3::ConstantRandomVariable[Constant=0]"));
 
-    ApplicationContainer appSrc = onoff.Install(nodoSrc);
-    appSrc.Start(Seconds(inicio->GetValue()));
-    appSrc.Stop(Seconds(195.0));
+    ApplicationContainer appTx =
+        emisor.Install(red.clusters[fl.clusterOrigen].Get(fl.miembroOrigen));
+    appTx.Start(Seconds(inicio->GetValue()));
+    appTx.Stop(Seconds(fin));
 }
 \end{verbatim}
 
-\subsubsection{Instrumentación y guardado de FlowMonitor}
+\subsubsection{Cálculo y guardado de métricas}
 
 \begin{verbatim}
-// Guardado con comprobación de directorios y nomenclatura estándar
-std::error_code ec;
-std::filesystem::create_directories(p.outDir, ec);
-
-std::ostringstream archivo;
-archivo << p.outDir << "/"
-              << p.scenario
-              << "_cs" << p.clusterSpeed
-              << "_ns" << p.nodeSpeed
-              << "_run" << RngSeedManager::GetRun()
-              << ".xml";
+std::filesystem::create_directories(p.outDir);
+std::string archivo = NombreSalida(p, "");
 
 g_monitor->CheckForLostPackets();
 g_monitor->SerializeToXmlFile(archivo, true, true);
+
+// Acumulación de estadísticas por flujo
+for (const auto& [id, st] : g_monitor->GetFlowStats()) {
+    tx += st.txPackets;
+    rx += st.rxPackets;
+    rxBytes += st.rxBytes;
+    retardo += st.delaySum.GetSeconds();
+    jitter += st.jitterSum.GetSeconds();
+    if (st.rxPackets > 1) {
+        rxParaJitter += st.rxPackets - 1;
+    }
+}
 \end{verbatim}
 
 \subsection{Validación de integración del programa}
 
-Para verificar que los módulos de red, movilidad, tráfico y métricas quedaron acoplados correctamente y sin fugas de memoria o errores de segmentación, se ejecutaron pruebas de integración sobre el escenario base \textbf{E0} (sin movilidad):
+El funcionamiento conjunto del sistema se valida sobre el escenario de control \textbf{E0} (sin movilidad):
 
 \begin{verbatim}
 ./ns3 run "scratch/manet-jerarquica --scenario=E0 --clusterSpeed=0 \
            --nodeSpeed=0 --simTime=200 --RngRun=1 --outDir=resultados/raw"
 \end{verbatim}
 
-La ejecución concluyó exitosamente generando el archivo XML \texttt{resultados/raw/E0\_cs0\_ns0\_run1.xml}. El resumen en consola arrojó los siguientes indicadores de validación:
-\begin{itemize}
-    \item \textbf{Total de flujos activos detectados:} 8 de 8 (100\,\% de cobertura de la matriz de tráfico).
-    \item \textbf{Paquetes generados por flujo:} $\approx 738$ paquetes en cada uno de los 8 flujos ($\sim 5\,904$ paquetes totales generados durante los $\sim 184.5$ segundos de actividad).
-    \item \textbf{Tasa de entrega global (PDR) en E0:} $\mathbf{98.8\,\%}$. Las escasas pérdidas se limitaron a los paquetes iniciales transmitidos mientras el protocolo AODV realizaba el primer intercambio de solicitudes de ruta (RREQ/RREP) a través del canal backbone. Una vez establecidas las entradas en la tabla de enrutamiento, la entrega fue continua e ininterrumpida.
-    \item \textbf{Retardo medio en E0:} Menor a 15 ms para flujos intra-superclúster y menor a 28 ms para flujos inter-superclúster.
-\end{itemize}
+En la réplica 1 (\texttt{E0\_cs0\_ns0\_run1.xml}), los ocho flujos transmitieron un total de 5\,901 paquetes de datos y se recibieron exactamente 5\,901, alcanzando una tasa de entrega (PDR) del 100.0\,\%, un retardo promedio de 18.82\,ms y un throughput agregado de 137.80\,kbit/s. A través de las diez réplicas de control ejecutadas por el equipo (\texttt{resultados/resumen.csv}), la PDR media se situó en el 99.97\,\% (con un intervalo de confianza al 95\,\% de $[99.93, 100.01]$\,\%) y el retardo promedio en 20.41\,ms.
 
-Este resultado confirma que el sistema base está perfectamente sintonizado y que las degradaciones que se observen en los escenarios posteriores (E1 con movilidad de nodo, E2 con movilidad de clúster y E3 con movilidad combinada) reflejarán con fidelidad los efectos del movimiento sobre la topología y el costo de reparación de rutas de AODV, descartando anomalías por configuración errónea de la pila de protocolos o del patrón de tráfico. El programa queda así validado y listo para ser automatizado por la Parte 4.
-
+Estos resultados confirman que la red fija es plenamente estable y que el enrutamiento AODV a través del backbone jerárquico opera sin pérdidas una vez descubiertas las rutas iniciales. De este modo, queda validada la línea base necesaria para garantizar que cualquier degradación observada en los escenarios E1, E2 y E3 sea estrictamente atribuible a la dinámica de movilidad y no a defectos en la pila de red o en la generación de tráfico.
