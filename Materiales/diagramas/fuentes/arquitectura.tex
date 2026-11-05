@@ -1,0 +1,73 @@
+% Diagrama 1: Arquitectura jerárquica de la MANET
+% Compilar con: lualatex arquitectura.tex  (sale arquitectura.pdf)
+\documentclass[tikz,border=16pt]{standalone}
+\usetikzlibrary{arrows.meta}
+\usepackage{amsmath}
+\begin{document}
+\begin{tikzpicture}[
+  font=\sffamily\footnotesize,
+  super/.style={draw=black!50, dashed, rounded corners=6pt, fill=black!2},
+  cluster/.style={draw=black!55, rounded corners=4pt, fill=black!8,
+                  minimum width=2.5cm, minimum height=2.3cm},
+  ch/.style={circle, draw=black, fill=red!65, inner sep=2pt},
+  member/.style={circle, draw=black, fill=blue!55, inner sep=1.5pt},
+  arr/.style={-{Stealth[length=2.4mm]}},
+]
+% Superclústeres
+\node[super, minimum width=8.2cm, minimum height=4.8cm] (X) at (0,0) {};
+\node[super, minimum width=8.2cm, minimum height=4.8cm] (Y) at (9.4,0) {};
+\node at (0,2.75)  {\textbf{Superclúster X}};
+\node at (9.4,2.75){\textbf{Superclúster Y}};
+
+% Backbone (dibujado antes, queda detrás de los clústeres)
+\draw[black, line width=1.5pt] (-2.3,0) -- (11.7,0);
+\node[font=\sffamily\scriptsize, black] at (4.7,0.62)
+  {backbone $10.2.0.0/24$ · 250 m};
+
+% Clústeres
+\node[cluster] (A) at (-2.3,0) {};
+\node[cluster] (B) at ( 2.3,0) {};
+\node[cluster] (C) at ( 7.1,0) {};
+\node[cluster] (D) at (11.7,0) {};
+
+% Nombres de clúster y subredes
+\node[font=\sffamily\small\bfseries] at (-2.3,1.42) {A};
+\node[font=\sffamily\small\bfseries] at ( 2.3,1.42) {B};
+\node[font=\sffamily\small\bfseries] at ( 7.1,1.42) {C};
+\node[font=\sffamily\small\bfseries] at (11.7,1.42) {D};
+\node[font=\sffamily\tiny] at (-2.3,-0.95) {$10.1.1.0/24$};
+\node[font=\sffamily\tiny] at ( 2.3,-0.95) {$10.1.2.0/24$};
+\node[font=\sffamily\tiny] at ( 7.1,-0.95) {$10.1.3.0/24$};
+\node[font=\sffamily\tiny] at (11.7,-0.95) {$10.1.4.0/24$};
+
+% CH (centro) y miembros (anillo) de cada clúster
+\foreach \cx in {-2.3,2.3,7.1,11.7} {
+  \node[ch] at (\cx,0) {};
+  \node[member] at (\cx+0.7,0)     {};
+  \node[member] at (\cx-0.7,0)     {};
+  \node[member] at (\cx,0.7)       {};
+  \node[member] at (\cx,-0.7)      {};
+}
+
+% Flujo intra-superclúster (verde)
+\draw[green!55!black, thick, arr] (-1.7,0.7) -- (1.7,0.7);
+\node[green!45!black, font=\sffamily\scriptsize] at (0,0.98) {A1 $\rightarrow$ B1};
+
+% Flujo inter-superclúster (naranja, punteado)
+\draw[orange!80!black, thick, dashed, arr]
+  (-2.3,-0.7) .. controls (2.3,-2.05) .. (7.1,-0.7);
+\node[orange!75!black, font=\sffamily\scriptsize] at (2.4,-1.78) {A2 $\rightarrow$ C2};
+
+% Leyenda
+\begin{scope}[shift={(4.7,-3.0)}]
+  \draw[green!55!black, thick, arr] (-2.2,0) -- (-1.5,0);
+  \node[right, font=\sffamily\tiny] at (-1.45,0) {intra-superclúster};
+  \draw[orange!80!black, thick, dashed, arr] (0.9,0) -- (1.6,0);
+  \node[right, font=\sffamily\tiny] at (1.65,0) {inter-superclúster};
+  \node[ch] at (3.2,0) {};
+  \node[right, font=\sffamily\tiny] at (3.3,0) {CH};
+  \node[member] at (4.0,0) {};
+  \node[right, font=\sffamily\tiny] at (4.1,0) {miembro};
+\end{scope}
+\end{tikzpicture}
+\end{document}

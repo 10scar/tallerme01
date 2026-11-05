@@ -1,58 +1,42 @@
 % =====================================================================
-% Manual de usuario (Parte II de Manuales.tex)
+% Manual de usuario
 % Responsable: Parte 6 — John Jairo Páez Albino
-% Se incluye en Manuales.tex con \input{secciones/manual-usuario.tex}.
-% Usa los paquetes graphicx y booktabs, y las rutas son relativas a la
-% raíz del repositorio.
 % =====================================================================
 \section{Manual de usuario}
 \label{sec:manual-usuario}
 
-Este manual explica, paso a paso, cómo correr una simulación, cómo correr todos los
-escenarios del experimento, cómo generar las tablas y las gráficas y cómo leer los
-resultados. La instalación de ns-3 y la estructura del código están en el manual
-técnico.
+Este manual explica cómo ejecutar la simulación propuesta, cómo leer su salida y cómo
+visualizar el movimiento de los nodos. La instalación de ns-3 y la estructura del código
+están en el manual técnico.
 
 \subsection{Antes de empezar}
 
 Se necesita:
 
 \begin{itemize}
-    \item Ubuntu 22.04, nativo o en WSL2 sobre Windows.
+    \item Un sistema Linux (por ejemplo, Ubuntu 22.04), WSL2 sobre Windows o Windows
+    nativo, con las dependencias de ns-3 instaladas (ver el manual técnico).
     \item ns-3.43 compilado con los módulos \texttt{wifi}, \texttt{aodv},
     \texttt{mobility}, \texttt{internet}, \texttt{applications}, \texttt{flow-monitor}
     y \texttt{netanim} (ver el manual técnico).
-    \item Python 3.10 o superior. Los scripts que corren y procesan las simulaciones solo
-    usan la librería estándar; el de las gráficas necesita además \texttt{pandas},
-    \texttt{matplotlib}, \texttt{scipy} y \texttt{numpy}.
-    \item El repositorio del grupo, descargado en el disco de Linux (por ejemplo, en la
-    carpeta personal \texttt{\textasciitilde}). En WSL no conviene trabajar en
-    \texttt{/mnt/c/...}, porque compilar sobre el disco de Windows es mucho más lento.
+    \item Python 3.10 o superior, requerido por el lanzador de ns-3.
 \end{itemize}
 
-\begin{verbatim}
-cd ~
-git clone https://github.com/10scar/tallerme01
-cd tallerme01
-python3 -m pip install pandas matplotlib scipy numpy
-\end{verbatim}
-
 En los ejemplos se supone que ns-3 está en \texttt{\textasciitilde/ns-allinone-3.43/ns-3.43}
-y el repositorio en \texttt{\textasciitilde/tallerme01}; si están en otro lugar, basta
-con cambiar esas rutas.
+y que \texttt{manet-jerarquica.cc} está en la carpeta actual; si ns-3 está en otro lugar,
+basta con cambiar esa ruta.
 
 \subsection{Paso 1: correr una simulación}
 
-El programa está en \texttt{simulacion/manet-jerarquica.cc}. ns-3 compila los programas
-de su carpeta \texttt{scratch/}, así que primero se copia allí y luego se ejecuta desde
-la carpeta de ns-3:
+El programa es el archivo \texttt{manet-jerarquica.cc}. ns-3 compila los programas de su
+carpeta \texttt{scratch/}, así que primero se copia allí y luego se ejecuta desde la
+carpeta de ns-3:
 
 \begin{verbatim}
-cp ~/tallerme01/simulacion/manet-jerarquica.cc ~/ns-allinone-3.43/ns-3.43/scratch/
+cp manet-jerarquica.cc ~/ns-allinone-3.43/ns-3.43/scratch/
 cd ~/ns-allinone-3.43/ns-3.43
 ./ns3 run "scratch/manet-jerarquica --scenario=E3 --clusterSpeed=5 \
-    --nodeSpeed=5 --simTime=200 --RngRun=1 \
-    --outDir=$HOME/tallerme01/resultados/raw"
+    --nodeSpeed=5 --simTime=200 --RngRun=1"
 \end{verbatim}
 
 La primera vez, \texttt{./ns3 run} compila el programa antes de ejecutarlo. Los
@@ -119,144 +103,43 @@ salida e imprime un resumen con este formato:\par}
 \end{verbatim}
 
 Este resumen sirve para comprobar rápido que la corrida funcionó, pero suma todos los
-flujos, incluidos los mensajes de control de AODV. Las cifras del informe salen de los
-scripts del paso 4, que cuentan solo los flujos de datos, así que no coinciden con las de
-la consola.
+flujos, incluidos los mensajes de control de AODV. Las cifras que se reportan se calculan
+solo sobre los flujos de datos, así que no coinciden con las de la consola.
 
-\subsection{Paso 2 (opcional): comprobar que todo funciona}
+\subsection{Paso 2 (opcional): comprobar que la red está conectada}
 
 Para verificar que la red jerárquica está conectada, se corre el programa con
 \texttt{-{}-verificar=true}. Envía paquetes de prueba entre clústeres y termina con el
 mensaje \texttt{RESULTADO: la red jerárquica está conectada.} Si aparece
 \texttt{RESULTADO: hay pares sin conectividad}, hay que revisar la geometría o los
-alcances.
+alcances. La prueba también confirma que la movilidad configurada no rompe la red en el
+escenario E0.
 
-Para comprobar que la movilidad hace lo que dice el diseño, se corre desde la carpeta
-del repositorio:
+\subsection{Paso 3: ejecutar los escenarios}
 
-\begin{verbatim}
-cd ~/tallerme01
-python3 scripts/validar_movilidad.py --ns3 ~/ns-allinone-3.43/ns-3.43
-\end{verbatim}
+El programa se ejecuta una vez por configuración. El escenario se selecciona con
+\texttt{-{}-scenario} y las velocidades con \texttt{-{}-clusterSpeed} y
+\texttt{-{}-nodeSpeed}, de acuerdo con la tabla anterior. El control E0 se corre una sola
+vez, sin movimiento; E1, E2 y E3 se corren a 1, 5, 10 y 20\,m/s, y cada configuración se
+repite diez veces cambiando \texttt{-{}-RngRun} para obtener réplicas independientes. En
+total son 130 corridas. Cada una escribe su propio XML en la carpeta indicada por
+\texttt{-{}-outDir}.
 
-El script copia la versión actual del programa a \texttt{scratch/}, lo compila, corre
-simulaciones cortas y revisa siete reglas: que en E0 nada se mueva, que en E1 solo se
-muevan los miembros, que en E2 cada clúster viaje junto, que nadie salga de su región,
-que las velocidades sean las pedidas, que la misma semilla dé el mismo resultado y que
-haya ocho flujos de datos. Termina con código 0 si todas las pruebas pasan.
+\subsection{Paso 4: interpretar la salida}
 
-\subsection{Paso 3: correr todos los escenarios}
+Cada corrida produce un archivo XML de FlowMonitor y un resumen en consola. El XML
+contiene las estadísticas por flujo: paquetes transmitidos y recibidos, bytes, suma de
+retardos y suma de variaciones de retardo. A partir de esos contadores se calculan las
+cuatro métricas del estudio: la tasa de entrega de paquetes (PDR), el retardo extremo a
+extremo medio, el \emph{throughput} y el \emph{jitter}. Solo se consideran los ocho flujos
+de datos (puertos 5000 a 5007); el tráfico de control de AODV (puerto 654) se excluye
+porque no representa carga útil.
 
-El script \texttt{scripts/correr\_\allowbreak{}escenarios.sh} corre el experimento completo: E0 una
-vez y E1, E2 y E3 a 1, 5, 10 y 20\,m/s, con 10 réplicas cada uno, es decir, 130
-simulaciones. Antes de empezar copia el programa a \texttt{scratch/}. Conviene probarlo
-en este orden:
-
-\begin{verbatim}
-cd ~/tallerme01
-bash scripts/correr_escenarios.sh --ns3 ~/ns-allinone-3.43/ns-3.43 --dry-run
-bash scripts/correr_escenarios.sh --ns3 ~/ns-allinone-3.43/ns-3.43 --piloto
-bash scripts/correr_escenarios.sh --ns3 ~/ns-allinone-3.43/ns-3.43
-\end{verbatim}
-
-La primera línea solo muestra los 130 comandos sin ejecutarlos; la segunda corre cuatro
-simulaciones de prueba (E0, y E1, E2 y E3 a 5\,m/s), y la tercera corre todo. Mientras
-avanza, el script muestra una línea por simulación, por ejemplo
-\texttt{[012/130] Ejecutando E1\_\allowbreak{}cs0\_\allowbreak{}ns1\_\allowbreak{}run2 ... OK}. Las opciones son:
-
-\begin{center}
-\small
-\begin{tabular}{p{3.6cm}p{9cm}}
-\toprule
-\textbf{Opción} & \textbf{Qué hace} \\
-\midrule
-\texttt{-{}-ns3 RUTA} & Carpeta de ns-3 que contiene \texttt{./ns3}. También se puede dar con la variable \texttt{NS3\_\allowbreak{}DIR}. \\
-\texttt{-{}-repeticiones N} & Réplicas por configuración (por defecto, 10). \\
-\texttt{-{}-piloto} & Corre solo cuatro simulaciones de prueba. \\
-\texttt{-{}-dry-run} & Muestra los comandos sin ejecutar nada. \\
-\texttt{-{}-forzar} & Repite las simulaciones aunque ya exista su XML. \\
-\texttt{-{}-sin-copiar} & No copia el programa a \texttt{scratch/}. \\
-\texttt{-{}-ayuda} & Muestra la ayuda. \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Los XML quedan en \texttt{resultados/raw/} y la salida de cada simulación en
-\texttt{resultados/logs/}. Si el experimento se interrumpe, basta con volver a correr el
-mismo comando: las simulaciones que ya tienen su XML se omiten
-(\texttt{OMITIDO (XML existente)}).
-
-\subsection{Paso 4: procesar los resultados}
-
-\begin{verbatim}
-python3 scripts/parse_flowmon.py
-\end{verbatim}
-
-Este script lee todos los XML de \texttt{resultados/raw/} y escribe
-\texttt{resultados/resumen.csv}, con una fila por simulación. Solo cuenta los ocho flujos
-de datos (puertos UDP 5000 a 5007) y deja por fuera el tráfico de control de AODV
-(puerto 654). Sus opciones son \texttt{-{}-raw} (carpeta de los XML), \texttt{-{}-salida}
-(archivo CSV), \texttt{-{}-sim-time} (duración de cada simulación, 200\,s por defecto),
-\texttt{-{}-completo} (exige que estén las 13 configuraciones con todas sus réplicas) y
-\texttt{-{}-repeticiones}.
-
-Las columnas principales de \texttt{resumen.csv} son el escenario, las velocidades, la
-réplica (\texttt{run}), los paquetes enviados y recibidos (\texttt{tx\_\allowbreak{}packets},
-\texttt{rx\_\allowbreak{}packets}) y las cuatro métricas: \texttt{pdr\_\allowbreak{}pct} (\%),
-\texttt{retardo\_\allowbreak{}ms}, \texttt{throughput\_\allowbreak{}kbps} y \texttt{jitter\_\allowbreak{}ms}.
-
-\subsection{Paso 5: generar las gráficas y las pruebas estadísticas}
-
-\begin{verbatim}
-python3 scripts/graficar.py
-\end{verbatim}
-
-A partir de \texttt{resumen.csv}, el script genera:
-
-\begin{itemize}
-    \item \texttt{resultados/figuras/}: cinco gráficas, una por métrica contra la
-    velocidad (\texttt{01\_\allowbreak{}pdr}, \texttt{02\_\allowbreak{}retardo}, \texttt{03\_\allowbreak{}throughput},
-    \texttt{04\_\allowbreak{}jitter}) y una con las corridas en las que no llegó ningún paquete
-    (\texttt{05\_\allowbreak{}corridas\_\allowbreak{}sin\_\allowbreak{}recepcion}).
-    \item \texttt{resultados/tabla\_\allowbreak{}estadistica.csv}: media, desviación estándar e
-    intervalo de confianza del 95\,\% de cada métrica, por escenario y velocidad.
-    \item \texttt{resultados/comparacion\_\allowbreak{}E2\_\allowbreak{}vs\_\allowbreak{}E1.csv}: la prueba $t$ de Welch
-    unilateral entre E2 y E1 para cada velocidad.
-    \item \texttt{resultados/RESULTADOS.md}: un resumen con las figuras y la tabla
-    principal.
-\end{itemize}
-
-Sus opciones \texttt{-{}-csv}, \texttt{-{}-figuras} y \texttt{-{}-resultados} permiten cambiar
-el archivo de entrada y las carpetas de salida.
-
-\subsection{Paso 6: interpretar los resultados}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.75\textwidth]{resultados/figuras/01_pdr_vs_velocidad.png}
-\caption{Ejemplo de gráfica generada por \texttt{graficar.py}: PDR contra velocidad
-para cada escenario.}
-\label{fig:manual-pdr}
-\end{figure}
-
-En las gráficas (figura~\ref{fig:manual-pdr}), cada punto es la media de las réplicas
-de una configuración y las barras son su intervalo de confianza del 95\,\%. Cuando los
-intervalos de dos escenarios no se traslapan, la diferencia entre ellos es clara; cuando
-se traslapan, hay que mirar la prueba estadística.
-
-En \texttt{tabla\_\allowbreak{}estadistica.csv}, las columnas que terminan en \texttt{\_\allowbreak{}media},
-\texttt{\_\allowbreak{}ic95\_\allowbreak{}inf} y \texttt{\_\allowbreak{}ic95\_\allowbreak{}sup} son la media y los límites del intervalo de
-cada métrica, y \texttt{corridas\_\allowbreak{}sin\_\allowbreak{}rx} cuenta las réplicas en las que no llegó
-ningún paquete. En esas réplicas el retardo y el \emph{jitter} no se pueden calcular, así
-que quedan vacíos en lugar de valer cero.
-
-{\sloppy
-En \texttt{comparacion\_\allowbreak{}E2\_\allowbreak{}vs\_\allowbreak{}E1.csv}, cada fila es una velocidad y una métrica. Las
-columnas más importantes son \texttt{diferencia\_\allowbreak{}E2\_\allowbreak{}menos\_\allowbreak{}E1}, \texttt{p\_\allowbreak{}unilateral}
-y \texttt{rechaza\_\allowbreak{}H0\_\allowbreak{}alpha\_\allowbreak{}0\_\allowbreak{}05}: si esta última vale \texttt{True}, la diferencia
-va en la dirección de la hipótesis y es significativa con $\alpha = 0.05$. Según la
-regla de decisión del informe (sección «Método de análisis estadístico»), la hipótesis
-principal se respalda si eso ocurre en al menos tres de las cuatro velocidades.\par}
+El resumen en consola incluye todos los flujos, también los de AODV, por lo que sus
+cifras no coinciden con las que se obtienen al analizar únicamente los flujos de datos.
+Para comparar escenarios se usan las medias de las diez réplicas de cada configuración y
+sus intervalos de confianza del 95\,\%; la comparación formal entre E2 y E1 se hace con
+una prueba $t$ de Welch unilateral.
 
 \subsection{Visualizar una simulación con NetAnim}
 
@@ -274,11 +157,9 @@ en rojo y los miembros en azul.\par}
 \toprule
 \textbf{Mensaje o síntoma} & \textbf{Qué hacer} \\
 \midrule
-\texttt{No está ./ns3 en ...} o \texttt{No existe el directorio de ns-3} & Indicar la carpeta correcta con \texttt{-{}-ns3} o con la variable \texttt{NS3\_\allowbreak{}DIR}. \\
-\texttt{OMITIDO (XML existente)} & Es normal al retomar un experimento. Para repetir esas simulaciones, agregar \texttt{-{}-forzar}. \\
-\texttt{ERROR de simulación} & Revisar el archivo de esa simulación en \texttt{resultados/logs/}; el script muestra sus últimas líneas. \\
 \texttt{./ns3} no arranca con el Python del sistema & Indicar otro intérprete con la variable \texttt{NS3\_\allowbreak{}PYTHON}. \\
-Todo es muy lento en WSL & Mover ns-3 y el repositorio al disco de Linux (\texttt{\textasciitilde}) en vez de \texttt{/mnt/c/...}. \\
+Error al compilar el programa & Verificar que ns-3 se configuró con los módulos \texttt{wifi}, \texttt{aodv}, \texttt{mobility}, \texttt{internet}, \texttt{applications}, \texttt{flow-monitor} y \texttt{netanim}. \\
+Todo es muy lento en WSL & Mover ns-3 y el proyecto al disco de Linux (\texttt{\textasciitilde}) en vez de \texttt{/mnt/c/...}. \\
 \bottomrule
 \end{tabular}
 \end{center}

@@ -1,10 +1,13 @@
-name: Compilar Entregable
+name: Compilar Entregables
 
 on:
   push:
     branches: [main]
     paths:
       - "Entregable.tex"
+      - "Manuales.tex"
+      - "secciones/**"
+      - "referencias.bib"
       - "Materiales/**"
       - ".github/workflows/build-entregable.yml"
   workflow_dispatch:
@@ -14,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    name: Generar PDF
+    name: Generar PDFs
     runs-on: ubuntu-latest
 
     steps:
@@ -28,27 +31,40 @@ jobs:
           latexmk_use_lualatex: true
           args: -interaction=nonstopmode -halt-on-error -file-line-error
 
-      - name: Renombrar PDF
-        run: mv Entregable.pdf "Entregable-${{ github.sha }}.pdf"
+      - name: Compilar Manuales.tex con LuaLaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: Manuales.tex
+          latexmk_use_lualatex: true
+          args: -interaction=nonstopmode -halt-on-error -file-line-error
 
-      - name: Subir PDF como artefacto
+      - name: Renombrar PDFs
+        run: |
+          mv Entregable.pdf "Entregable-${{ github.sha }}.pdf"
+          mv Manuales.pdf "Manuales-${{ github.sha }}.pdf"
+
+      - name: Subir PDFs como artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: Entregable-${{ github.run_number }}
-          path: Entregable-${{ github.sha }}.pdf
+          name: Entregables-${{ github.run_number }}
+          path: |
+            Entregable-${{ github.sha }}.pdf
+            Manuales-${{ github.sha }}.pdf
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publicar PDF como Release
+      - name: Publicar PDFs como Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: entregable-${{ github.run_number }}
           name: "Entregable #${{ github.run_number }}"
           body: |
-            PDF generado automáticamente desde el commit ${{ github.sha }}.
+            PDFs generados automáticamente desde el commit ${{ github.sha }}.
 
             **Autor del push:** ${{ github.actor }}
             **Rama:** ${{ github.ref_name }}
-          files: Entregable-${{ github.sha }}.pdf
+          files: |
+            Entregable-${{ github.sha }}.pdf
+            Manuales-${{ github.sha }}.pdf
           make_latest: true
           fail_on_unmatched_files: true
